@@ -1,0 +1,57 @@
+{
+    "url" : "index.php",
+    "ajaxUrl" : "Penzugy/ajax",   
+    "tables" : ["p_cegek"],
+    "where" : "",
+    "last" : "ORDER BY nev ASC",
+    "id" : "id",
+    "cols": [
+        {
+            "name": "id",
+            "text": "ID",
+            "alias": "id",
+            "visible": false
+        },
+        {
+            "name": "nev",
+            "text": "Név",            
+            "visible": true
+        },
+        {
+            "name": "telepules",
+            "text": "Település",            
+            "visible": true
+        },
+        {
+            "name": "adoszam",
+            "text": "Adószám",            
+            "visible": true
+        },
+        {
+            "name":"(SELECT COUNT(*) FROM p_egyedek e WHERE e.id_szallito=p_cegek.id OR e.id_vevo=p_cegek.id)",
+            "text":"Aktivitás",
+            "alias":"egyedek"
+        }
+    ],
+    "form": [
+        [
+            {
+                "name": "nev",
+                "type": "text",
+                "placeholder": "Név",
+                "bt_num" : 8
+            },
+            {
+                "name": "rovid_nev",
+                "type": "text",                
+                "bt_num" : 4
+            }
+        ],
+        [
+            {
+                "name": "telepules",
+                "type": "text"                
+            }
+        ]
+    ]
+}

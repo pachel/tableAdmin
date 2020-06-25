@@ -1,0 +1,171 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "7cc9dca3ce6840f2f9778fdd64580cc5",
+    "packages": [
+        {
+            "name": "components/jquery",
+            "version": "3.5.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/components/jquery.git",
+                "reference": "b33e8f0f9a1cb2ae390cf05d766a900b53d2125b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/components/jquery/zipball/b33e8f0f9a1cb2ae390cf05d766a900b53d2125b",
+                "reference": "b33e8f0f9a1cb2ae390cf05d766a900b53d2125b",
+                "shasum": ""
+            },
+            "type": "component",
+            "extra": {
+                "component": {
+                    "scripts": [
+                        "jquery.js"
+                    ],
+                    "files": [
+                        "jquery.min.js",
+                        "jquery.min.map",
+                        "jquery.slim.js",
+                        "jquery.slim.min.js",
+                        "jquery.slim.min.map"
+                    ]
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "JS Foundation and other contributors"
+                }
+            ],
+            "description": "jQuery JavaScript Library",
+            "homepage": "http://jquery.com",
+            "time": "2020-05-05T13:21:02+00:00"
+        },
+        {
+            "name": "datatables/datatables",
+            "version": "1.10.20",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/DataTables/DataTables.git",
+                "reference": "83657a29e33ce93ee940ce25684940eb3acb2913"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/DataTables/DataTables/zipball/83657a29e33ce93ee940ce25684940eb3acb2913",
+                "reference": "83657a29e33ce93ee940ce25684940eb3acb2913",
+                "shasum": ""
+            },
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "DataTables is a plug-in for the jQuery Javascript library. It is a highly flexible tool, based upon the foundations of progressive enhancement, which will add advanced interaction controls to any HTML table.",
+            "homepage": "http://www.datatables.net/",
+            "time": "2019-10-01T13:42:32+00:00"
+        },
+        {
+            "name": "pachel/dbclass",
+            "version": "1.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/pachel/dbclass.git",
+                "reference": "f6a5e84a7651df0aea514b754e429cd51a074088"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/pachel/dbclass/zipball/f6a5e84a7651df0aea514b754e429cd51a074088",
+                "reference": "f6a5e84a7651df0aea514b754e429cd51a074088",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "(LGPL-2.1-only or GPL-3.0-or-later)"
+            ],
+            "authors": [
+                {
+                    "name": "Laszlo Toth",
+                    "email": "pachel82@gmail.com"
+                }
+            ],
+            "description": "DBclass for mysql",
+            "homepage": "https://github.com/pachel/dbclass",
+            "time": "2020-02-27T11:37:37+00:00"
+        },
+        {
+            "name": "twbs/bootstrap",
+            "version": "v4.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/twbs/bootstrap.git",
+                "reference": "7a6da5e3e7ad7c749dde806546a35d4d4259d965"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/twbs/bootstrap/zipball/7a6da5e3e7ad7c749dde806546a35d4d4259d965",
+                "reference": "7a6da5e3e7ad7c749dde806546a35d4d4259d965",
+                "shasum": ""
+            },
+            "replace": {
+                "twitter/bootstrap": "self.version"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.3.x-dev"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mark Otto",
+                    "email": "markdotto@gmail.com"
+                },
+                {
+                    "name": "Jacob Thornton",
+                    "email": "jacobthornton@gmail.com"
+                }
+            ],
+            "description": "The most popular front-end framework for developing responsive, mobile first projects on the web.",
+            "homepage": "https://getbootstrap.com/",
+            "keywords": [
+                "JS",
+                "css",
+                "framework",
+                "front-end",
+                "mobile-first",
+                "responsive",
+                "sass",
+                "web"
+            ],
+            "time": "2020-05-12T17:44:42+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": []
+}
