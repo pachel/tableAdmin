@@ -15,9 +15,9 @@
             <?php endif;endforeach;?>            
             <td>
                 <?php if($this->runMethods("delete",$row)):?>
-                <a href="<?=$this->config["url"]."?ta_method=delete&id=".$row[$this->config["id"]]?>">Töröl</a>
+                <a href="<?=$this->config["url"]."?ta_method=delete&key=".$this->key."&id=".$row[$this->config["id"]]?>" onclick="return confirm('Biztos hogy törli?')">Töröl</a>
                 <?php endif;?>
-                <a href="<?=$this->config["url"]."?ta_method=edit&id=".$row[$this->config["id"]]?>">Szerkeszt</a>
+                <a href="<?=$this->config["url"]."?ta_method=edit&key=".$this->key."&id=".$row[$this->config["id"]]?>">Szerkeszt</a>
             </td>
             </tr>            
             <?php endforeach; ?>

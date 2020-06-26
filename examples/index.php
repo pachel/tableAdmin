@@ -7,6 +7,9 @@
 
 namespace pachel;
 session_start();
+error_reporting(E_ALL);
+ini_set("display_errors",true);
+
 ?>
 <html>
     <head>
@@ -31,10 +34,9 @@ session_start();
             $tdadmin = new TableAdmin($db);
             $tdadmin->addMethodToButtons(function($row) {
                 if ($row["egyedek"] == 0) {
-                    return true;
+                   // return true;
                 }
-
-                return false;
+                return true;
             }, "delete");
             $tdadmin->loadConfig(__DIR__ . "/cegek.json");
             $tdadmin->show();
