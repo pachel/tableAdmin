@@ -6,6 +6,7 @@
  */
 
 namespace pachel;
+session_start();
 ?>
 <html>
     <head>

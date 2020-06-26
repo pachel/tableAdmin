@@ -48,7 +48,7 @@ class TableAdmin {
             $this->db = &$db;
         }
 
-        $this->keyfile = __DIR__ . "/../tmp/ta_key_" . md5($_SERVER["HTTP_HOST"] . $_SERVER["SCRIPT_FILENAME"]);
+        $this->keyfile = __DIR__ . "/../tmp/ta_key_" . md5($_SERVER["HTTP_HOST"] . $_SERVER["SCRIPT_FILENAME"].session_id());
         if (!isset($_GET["ta_method"])) {
             $this->key = md5(time() . microtime());
             file_put_contents($this->keyfile, $this->key);

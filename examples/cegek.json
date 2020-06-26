@@ -2,9 +2,10 @@
     "url" : "index.php",
     "ajaxUrl" : "Penzugy/ajax",   
     "tables" : ["p_cegek"],
-    "where" : "",
+    "where" : "statusz=1",
     "last" : "ORDER BY nev ASC",
     "id" : "id",
+    "addButton" : true,
     "cols": [
         {
             "name": "id",
@@ -39,6 +40,7 @@
                 "name": "nev",
                 "type": "text",
                 "placeholder": "Név",
+                "required" : true,
                 "bt_num" : 8
             },
             {
