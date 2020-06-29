@@ -14,10 +14,10 @@
                         <label><?=$col["text"]?></label>
                         <?php if($col["type"] == "textarea"):?>
                         <textarea class="form-control" id="ta_form_<?=$col["name"]?>" placeholder="<?=$col["text"]?>" name="<?=$col["name"]?>"<?=(isset($col["required"]) && $col["required"])?" required=\"true\"":""?>>
-                            <?=$result[$col["name"]]?>
+                            <?=(isset($result[$col["name"]])?$result[$col["name"]]:"")?>
                         </textarea>
                         <?php else: ?>
-                        <input type="<?=$col["type"]?>" class="form-control" id="ta_form_<?=$col["name"]?>" placeholder="<?=$col["text"]?>" name="<?=$col["name"]?>"<?=(isset($col["required"]) && $col["required"])?" required=\"true\"":""?> value="<?=$result[$col["name"]]?>">
+                        <input type="<?=$col["type"]?>" class="form-control" id="ta_form_<?=$col["name"]?>" placeholder="<?=$col["text"]?>" name="<?=$col["name"]?>"<?=(isset($col["required"]) && $col["required"])?" required=\"true\"":""?> value="<?=(isset($result[$col["name"]])?$result[$col["name"]]:"")?>">
                         <?php endif;?>
                     </div>
                 </div>

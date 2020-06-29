@@ -38,18 +38,21 @@ class TableAdmin {
     private $data = [];
     private $key = "";
     private $keyfile = "";
+
     /**
      *
      *  A gombokhoz tartozó függvények, csak akkor jelennek meg a gombok, ha a függvény visszatérési értéke igaz
      * @var array
      */
     private $methods = ["delete" => [], "edit" => []];
+
     /**
      *  Függvénylista a gombokhoz
      *  A gomb linkjének meghívásakor fut(nak) le
      * @var array
      */
     private $buttonMethods = ["delete" => []];
+
     /**
      *  Extra gombok, 
      * @var array
@@ -119,6 +122,14 @@ class TableAdmin {
                 } else {
                     throw new \Exception(error(2));
                 }
+            } elseif ($_GET["ta_method"] == "add") {
+                if ($_GET["key"] == $this->key) {
+                    $this->saveForm();
+                    header("location:" . $this->config["url"]);
+                    exit();
+                } else {
+                    throw new \Exception(error(2));
+                }
             } else {
                 
             }
@@ -126,10 +137,10 @@ class TableAdmin {
 
         if (isset($_GET["ta_method"]) && $_GET["ta_method"] == "delete") {
             if ($_GET["key"] == $this->key) {
-                if (isset($this->buttonMethods["delete"]) && !empty($this->buttonMethods["delete"])) {
-                    foreach ($this->buttonMethods["delete"] AS $deleteMethod) {
-                        $deleteMethod($_GET["id"]);
-                    }
+                
+                if (isset($this->buttonMethods["delete"]) && gettype($this->buttonMethods["delete"]) == "object") {
+
+                    $this->buttonMethods["delete"]($_GET["id"]);
 //                    $this->db->toDatabase($this->config["delete"]);
                 } else {
                     $this->db->delete($this->config["formTable"], [$this->config["id"] => $_GET["id"]]);
@@ -140,12 +151,13 @@ class TableAdmin {
                 throw new \Exception(error(3));
             }
         }
-        if (isset($_GET["ta_method"]) && $_GET["ta_method"] != "edit") {
+        if (isset($_GET["ta_method"]) && $_GET["ta_method"] != "edit" && $_GET["ta_method"] != "add") {
             if ($_GET["key"] == $this->key) {
-                if(isset($this->buttonMethods[$_GET["ta_method"]]) && gettext($this->buttonMethods[$_GET["ta_method"]]) == "object"){
+                if (isset($this->buttonMethods[$_GET["ta_method"]]) && gettype($this->buttonMethods[$_GET["ta_method"]]) == "object") {
                     $this->buttonMethods[$_GET["ta_method"]]($_GET["id"]);
                 }
             }
+            //die($this->buttonMethods[$_GET["ta_method"]]);
             header("location:" . $this->config["url"]);
             exit();
         }
@@ -159,7 +171,11 @@ class TableAdmin {
                 $data[$name] = $_POST[$name];
             }
         }
-        $this->db->update($this->config["formTable"], $data, [$this->config["id"] => $_GET["id"]]);
+        if ($_GET["ta_method"] == "edit") {
+            $this->db->update($this->config["formTable"], $data, [$this->config["id"] => $_GET["id"]]);
+        } elseif ($_GET["ta_method"] == "add") {
+            $this->db->insert($this->config["formTable"], $data);
+        }
     }
 
     public function appendConfig($config) {
@@ -211,11 +227,11 @@ class TableAdmin {
      * @param type $button
      * @return type
      */
-    public function addButtonMethod($method, $button) {
+    public function addButtonMethod($button, $method) {
         if (gettype($method) != "object") {
             return;
         }
-        $this->buttonMethods[$button][] = $method;
+        $this->buttonMethods[$button] = $method;
     }
 
     public function addMethodToTRClass() {
@@ -232,12 +248,14 @@ class TableAdmin {
 
     public function addButton($name, $text, $action = NULL) {
         if (!empty($action) && gettype($action) == "object") {
-            $this->buttonMethods[$name][] = $action;
+            $this->buttonMethods[$name] = $action;
         }
-        $this->buttons[] = ["name" => $name, "text" => $text];
+        if ($name != "delete" && $name != "edit" && $name != "add") {
+            $this->buttons[] = ["name" => $name, "text" => $text];
+        }
     }
 
-    private function runMethods($button, $row) {        
+    private function runMethods($button, $row) {
         foreach ($this->methods[$button] AS &$method) {
             if (!$method($row)) {
                 return false;
@@ -290,6 +308,9 @@ class TableAdmin {
         } elseif ($_GET["ta_method"] == "edit") {
             $this->checkFormConfig();
             $result = $this->db->fromDatabase($this->generateSelectToForm(), "@line");
+            require __DIR__ . "/../tpls/editForm.php";
+        } elseif ($_GET["ta_method"] == "add") {
+            $this->checkFormConfig();
             require __DIR__ . "/../tpls/editForm.php";
         }
     }

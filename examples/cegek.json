@@ -35,6 +35,7 @@
         }
     ],
     "formTable" : "p_cegek",
+    "add_button" : true,
     "form": [
         [
             {

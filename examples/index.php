@@ -32,7 +32,7 @@ ini_set("display_errors",true);
                 "password" => "Jsx_Juz_cv.7867"
             ]);
             $tdadmin = new TableAdmin($db);
-            $tdadmin->addButton("delete", "Verkbe", function($id){
+            $tdadmin->addButtonMethod("delete",function($id){
                 global $db;
                 $db->update("p_cegek",["statusz"=>0],["id"=>$id]);
             });
