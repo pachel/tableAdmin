@@ -51,7 +51,7 @@ class TableAdmin {
      *  A gomb linkjének meghívásakor fut(nak) le
      * @var array
      */
-    private $buttonMethods = ["delete" => []];
+    private $buttonActionMethods = ["delete" => []];
 
     /**
      *  Extra gombok, 
@@ -138,9 +138,9 @@ class TableAdmin {
         if (isset($_GET["ta_method"]) && $_GET["ta_method"] == "delete") {
             if ($_GET["key"] == $this->key) {
                 
-                if (isset($this->buttonMethods["delete"]) && gettype($this->buttonMethods["delete"]) == "object") {
+                if (isset($this->buttonActionMethods["delete"]) && gettype($this->buttonActionMethods["delete"]) == "object") {
 
-                    $this->buttonMethods["delete"]($_GET["id"]);
+                    $this->buttonActionMethods["delete"]($_GET["id"]);
 //                    $this->db->toDatabase($this->config["delete"]);
                 } else {
                     $this->db->delete($this->config["formTable"], [$this->config["id"] => $_GET["id"]]);
@@ -153,8 +153,8 @@ class TableAdmin {
         }
         if (isset($_GET["ta_method"]) && $_GET["ta_method"] != "edit" && $_GET["ta_method"] != "add") {
             if ($_GET["key"] == $this->key) {
-                if (isset($this->buttonMethods[$_GET["ta_method"]]) && gettype($this->buttonMethods[$_GET["ta_method"]]) == "object") {
-                    $this->buttonMethods[$_GET["ta_method"]]($_GET["id"]);
+                if (isset($this->buttonActionMethods[$_GET["ta_method"]]) && gettype($this->buttonActionMethods[$_GET["ta_method"]]) == "object") {
+                    $this->buttonActionMethods[$_GET["ta_method"]]($_GET["id"]);
                 }
             }
             //die($this->buttonMethods[$_GET["ta_method"]]);
@@ -227,11 +227,11 @@ class TableAdmin {
      * @param type $button
      * @return type
      */
-    public function addButtonMethod($button, $method) {
+    public function addButtonActionMethod($button, $method) {
         if (gettype($method) != "object") {
             return;
         }
-        $this->buttonMethods[$button] = $method;
+        $this->buttonActionMethods[$button] = $method;
     }
 
     public function addMethodToTRClass() {
@@ -248,7 +248,8 @@ class TableAdmin {
 
     public function addButton($name, $text, $action = NULL) {
         if (!empty($action) && gettype($action) == "object") {
-            $this->buttonMethods[$name] = $action;
+            $this->addButtonActionMethod($name, $action);
+            //$this->buttonMethods[$name] = $action;
         }
         if ($name != "delete" && $name != "edit" && $name != "add") {
             $this->buttons[] = ["name" => $name, "text" => $text];
