@@ -40,8 +40,7 @@
             {
                 "name": "nev",
                 "text" : "Név",
-                "type": "text",
-                "placeholder": "Név",
+                "type": "text",                
                 "required" : true,
                 "bt_num" : 8
             },
@@ -54,15 +53,27 @@
             {
                 "name": "adoszam",
                 "text":"Adószám",
-                "type": "text",                
-                "bt_num" : 4
+                "type": "text"
             }
         ],
         [
             {
                 "name": "telepules",
                 "text":"Település",
-                "type": "textarea"                
+                "type": "text",
+                "bt_num" : 4
+            },
+            {
+                "name": "irsz",
+                "text":"Irányítószám",
+                "type": "text",
+                "bt_num" : 2
+            },
+            {
+                "name": "cim",
+                "text":"Cím",
+                "type": "text",
+                "bt_num" : 6
             }
         ]
     ]

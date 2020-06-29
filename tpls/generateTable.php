@@ -18,6 +18,9 @@
                 <a href="<?=$this->config["url"]."?ta_method=delete&key=".$this->key."&id=".$row[$this->config["id"]]?>" onclick="return confirm('Biztos hogy törli?')">Töröl</a>
                 <?php endif;?>
                 <a href="<?=$this->config["url"]."?ta_method=edit&key=".$this->key."&id=".$row[$this->config["id"]]?>">Szerkeszt</a>
+                <?php foreach ($this->buttons AS $button):?>
+                <a href="<?=$this->config["url"]."?ta_method=".$button["name"]."&key=".$this->key."&id=".$row[$this->config["id"]]?>"><?=$button["text"]?></a>
+                <?php endforeach;?>
             </td>
             </tr>            
             <?php endforeach; ?>

@@ -38,7 +38,23 @@ class TableAdmin {
     private $data = [];
     private $key = "";
     private $keyfile = "";
+    /**
+     *
+     *  A gombokhoz tartozó függvények, csak akkor jelennek meg a gombok, ha a függvény visszatérési értéke igaz
+     * @var array
+     */
     private $methods = ["delete" => [], "edit" => []];
+    /**
+     *  Függvénylista a gombokhoz
+     *  A gomb linkjének meghívásakor fut(nak) le
+     * @var array
+     */
+    private $buttonMethods = ["delete" => []];
+    /**
+     *  Extra gombok, 
+     * @var array
+     */
+    private $buttons = []; /* ["name"=>"verk","text"=>"VERKBE"] */
 
     /**
      * 
@@ -110,8 +126,11 @@ class TableAdmin {
 
         if (isset($_GET["ta_method"]) && $_GET["ta_method"] == "delete") {
             if ($_GET["key"] == $this->key) {
-                if (isset($this->config["delete"]) && !empty($this->config["delete"])) {
-                    $this->db->toDatabase($this->config["delete"]);
+                if (isset($this->buttonMethods["delete"]) && !empty($this->buttonMethods["delete"])) {
+                    foreach ($this->buttonMethods["delete"] AS $deleteMethod) {
+                        $deleteMethod($_GET["id"]);
+                    }
+//                    $this->db->toDatabase($this->config["delete"]);
                 } else {
                     $this->db->delete($this->config["formTable"], [$this->config["id"] => $_GET["id"]]);
                 }
@@ -120,6 +139,15 @@ class TableAdmin {
             } else {
                 throw new \Exception(error(3));
             }
+        }
+        if (isset($_GET["ta_method"])) {
+            if ($_GET["key"] == $this->key) {
+                if(isset($this->buttonMethods[$_GET["ta_method"]]) && gettext($this->buttonMethods[$_GET["ta_method"]]) == "object"){
+                    $this->buttonMethods[$_GET["ta_method"]]($_GET["id"]);
+                }
+            }
+            header("location:" . $this->config["url"]);
+            exit();
         }
     }
 
@@ -170,11 +198,24 @@ class TableAdmin {
      * @param type string delete|edit
      * @return type
      */
-    public function addMethodToButtons($method, $button/* delete|edit */) {
+    public function addMethodToButtonsIfVisible($method, $button/* delete|edit */) {
         if (gettype($method) != "object") {
             return;
         }
         $this->methods[$button][] = $method;
+    }
+
+    /**
+     * 
+     * @param type $method
+     * @param type $button
+     * @return type
+     */
+    public function addButtonMethod($method, $button) {
+        if (gettype($method) != "object") {
+            return;
+        }
+        $this->buttonMethods[$button][] = $method;
     }
 
     public function addMethodToTRClass() {
@@ -189,11 +230,14 @@ class TableAdmin {
         
     }
 
-    public function addButton($name, $button, $action) {
-        
+    public function addButton($name, $text, $action = NULL) {
+        if (!empty($action) && gettype($action) == "object") {
+            $this->buttonMethods[$name][] = $action;
+        }
+        $this->buttons[] = ["name" => $name, "text" => $text];
     }
 
-    private function runMethods($button, $row) {
+    private function runMethods($button, $row) {        
         foreach ($this->methods[$button] AS &$method) {
             if (!$method($row)) {
                 return false;

@@ -9,15 +9,15 @@
     <?php foreach ($this->config["form"] AS $row): ?>
         <div class="row">
             <?php foreach ($row AS $col): ?>
-                <div class="col">
+            <div class="col<?=(isset($col["bt_num"])?"-".$col["bt_num"]:"")?>">
                     <div class="form-group">
                         <label><?=$col["text"]?></label>
                         <?php if($col["type"] == "textarea"):?>
-                        <textarea class="form-control" id="ta_form_<?=$col["name"]?>" placeholder="<?=$col["text"]?>" name="<?=$col["name"]?>"<?=(isset($col["reqired"]) && $col["reqired"])?" required=\"true\"":""?>>
+                        <textarea class="form-control" id="ta_form_<?=$col["name"]?>" placeholder="<?=$col["text"]?>" name="<?=$col["name"]?>"<?=(isset($col["required"]) && $col["required"])?" required=\"true\"":""?>>
                             <?=$result[$col["name"]]?>
                         </textarea>
                         <?php else: ?>
-                        <input type="<?=$col["type"]?>" class="form-control" id="ta_form_<?=$col["name"]?>" placeholder="<?=$col["text"]?>" name="<?=$col["name"]?>"<?=(isset($col["reqired"]) && $col["reqired"])?" required=\"true\"":""?> value="<?=$result[$col["name"]]?>">
+                        <input type="<?=$col["type"]?>" class="form-control" id="ta_form_<?=$col["name"]?>" placeholder="<?=$col["text"]?>" name="<?=$col["name"]?>"<?=(isset($col["required"]) && $col["required"])?" required=\"true\"":""?> value="<?=$result[$col["name"]]?>">
                         <?php endif;?>
                     </div>
                 </div>

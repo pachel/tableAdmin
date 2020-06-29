@@ -32,9 +32,13 @@ ini_set("display_errors",true);
                 "password" => "Jsx_Juz_cv.7867"
             ]);
             $tdadmin = new TableAdmin($db);
-            $tdadmin->addMethodToButtons(function($row) {
+            $tdadmin->addButton("delete", "Verkbe", function($id){
+                global $db;
+                $db->update("p_cegek",["statusz"=>0],["id"=>$id]);
+            });
+            $tdadmin->addMethodToButtonsIfVisible(function($row) {
                 if ($row["egyedek"] == 0) {
-                   // return true;
+                    return true;
                 }
                 return true;
             }, "delete");
