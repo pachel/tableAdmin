@@ -140,7 +140,7 @@ class TableAdmin {
                 throw new \Exception(error(3));
             }
         }
-        if (isset($_GET["ta_method"])) {
+        if (isset($_GET["ta_method"]) && $_GET["ta_method"] != "edit") {
             if ($_GET["key"] == $this->key) {
                 if(isset($this->buttonMethods[$_GET["ta_method"]]) && gettext($this->buttonMethods[$_GET["ta_method"]]) == "object"){
                     $this->buttonMethods[$_GET["ta_method"]]($_GET["id"]);
