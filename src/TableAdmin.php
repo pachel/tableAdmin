@@ -125,7 +125,7 @@ class TableAdmin {
             } elseif ($_GET["ta_method"] == "add") {
                 if ($_GET["key"] == $this->key) {
                     $this->saveForm();
-                    header("location:" . $this->config["url"]);
+                    header("location:" . $this->config["baseUrl"].$this->config["url"]);
                     exit();
                 } else {
                     throw new \Exception(error(2));
@@ -145,7 +145,7 @@ class TableAdmin {
                 } else {
                     $this->db->delete($this->config["formTable"], [$this->config["id"] => $_GET["id"]]);
                 }
-                header("location:" . $this->config["url"]);
+                header("location:" . $this->config["baseUrl"].$this->config["url"]);
                 exit();
             } else {
                 throw new \Exception(error(3));
@@ -158,7 +158,7 @@ class TableAdmin {
                 }
             }
             //die($this->buttonMethods[$_GET["ta_method"]]);
-            header("location:" . $this->config["url"]);
+            header("location:" . $this->config["baseUrl"].$this->config["url"]);
             exit();
         }
     }
@@ -173,13 +173,22 @@ class TableAdmin {
         }
         if ($_GET["ta_method"] == "edit") {
             $this->db->update($this->config["formTable"], $data, [$this->config["id"] => $_GET["id"]]);
+            if(isset($this->buttonActionMethods["edit"]) && gettype($this->buttonActionMethods["edit"]) == "object"){
+                $this->buttonActionMethods["edit"]($_GET["id"]);
+            }
         } elseif ($_GET["ta_method"] == "add") {
             $this->db->insert($this->config["formTable"], $data);
+            if(isset($this->buttonActionMethods["add"]) && gettype($this->buttonActionMethods["add"]) == "object"){
+                $this->buttonActionMethods["add"]($this->db->last_insert_id());
+            }
         }
     }
 
     public function appendConfig($config) {
-        
+        if(!is_array($config)){
+            throw new \Exception(error(4));
+        }
+        $this->config = array_merge($config, $this->config);
     }
 
     private function setQuery() {

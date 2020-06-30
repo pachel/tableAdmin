@@ -14,10 +14,12 @@
                         <label><?=$col["text"]?></label>
                         <?php if($col["type"] == "textarea"):?>
                         <textarea class="form-control" id="ta_form_<?=$col["name"]?>" placeholder="<?=$col["text"]?>" name="<?=$col["name"]?>"<?=(isset($col["required"]) && $col["required"])?" required=\"true\"":""?>>
-                            <?=(isset($result[$col["name"]])?$result[$col["name"]]:"")?>
+                            <?=(isset($col["value"])?$col["value"]:(isset($result[$col["name"]])?$result[$col["name"]]:""))?>
                         </textarea>
+                        <?php elseif($col["type"] == "hidden"): ?>
+                        <input type="hidden" class="form-control" id="ta_form_<?=$col["name"]?>" name="<?=$col["name"]?>" value="<?=(isset($col["value"])?$col["value"]:(isset($result[$col["name"]])?$result[$col["name"]]:""))?>">
                         <?php else: ?>
-                        <input type="<?=$col["type"]?>" class="form-control" id="ta_form_<?=$col["name"]?>" placeholder="<?=$col["text"]?>" name="<?=$col["name"]?>"<?=(isset($col["required"]) && $col["required"])?" required=\"true\"":""?> value="<?=(isset($result[$col["name"]])?$result[$col["name"]]:"")?>">
+                        <input type="<?=$col["type"]?>" class="form-control" id="ta_form_<?=$col["name"]?>" placeholder="<?=$col["text"]?>" name="<?=$col["name"]?>"<?=(isset($col["required"]) && $col["required"])?" required=\"true\"":""?> value="<?=(isset($col["value"])?$col["value"]:(isset($result[$col["name"]])?$result[$col["name"]]:""))?>">
                         <?php endif;?>
                     </div>
                 </div>
