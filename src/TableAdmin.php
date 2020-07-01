@@ -38,6 +38,12 @@ class TableAdmin {
     private $data = [];
     private $key = "";
     private $keyfile = "";
+    /**
+     * pointers to form config
+     * @var array
+     */
+    private $onlyFormCols = [];
+    private $onlyCols = [];
 
     /**
      *
@@ -59,6 +65,7 @@ class TableAdmin {
      */
     private $buttons = []; /* ["name"=>"verk","text"=>"VERKBE"] */
 
+    private $trClassMethod = [];
     /**
      * 
      * @param type pachel/dbClass
@@ -125,7 +132,7 @@ class TableAdmin {
             } elseif ($_GET["ta_method"] == "add") {
                 if ($_GET["key"] == $this->key) {
                     $this->saveForm();
-                    header("location:" . $this->config["baseUrl"].$this->config["url"]);
+                    header("location:" . $this->config["baseUrl"] . $this->config["url"]);
                     exit();
                 } else {
                     throw new \Exception(error(2));
@@ -137,7 +144,7 @@ class TableAdmin {
 
         if (isset($_GET["ta_method"]) && $_GET["ta_method"] == "delete") {
             if ($_GET["key"] == $this->key) {
-                
+
                 if (isset($this->buttonActionMethods["delete"]) && gettype($this->buttonActionMethods["delete"]) == "object") {
 
                     $this->buttonActionMethods["delete"]($_GET["id"]);
@@ -145,7 +152,7 @@ class TableAdmin {
                 } else {
                     $this->db->delete($this->config["formTable"], [$this->config["id"] => $_GET["id"]]);
                 }
-                header("location:" . $this->config["baseUrl"].$this->config["url"]);
+                header("location:" . $this->config["baseUrl"] . $this->config["url"]);
                 exit();
             } else {
                 throw new \Exception(error(3));
@@ -158,7 +165,7 @@ class TableAdmin {
                 }
             }
             //die($this->buttonMethods[$_GET["ta_method"]]);
-            header("location:" . $this->config["baseUrl"].$this->config["url"]);
+            header("location:" . $this->config["baseUrl"] . $this->config["url"]);
             exit();
         }
     }
@@ -173,27 +180,26 @@ class TableAdmin {
         }
         if ($_GET["ta_method"] == "edit") {
             $this->db->update($this->config["formTable"], $data, [$this->config["id"] => $_GET["id"]]);
-            if(isset($this->buttonActionMethods["edit"]) && gettype($this->buttonActionMethods["edit"]) == "object"){
+            if (isset($this->buttonActionMethods["edit"]) && gettype($this->buttonActionMethods["edit"]) == "object") {
                 $this->buttonActionMethods["edit"]($_GET["id"]);
             }
         } elseif ($_GET["ta_method"] == "add") {
             $this->db->insert($this->config["formTable"], $data);
-            if(isset($this->buttonActionMethods["add"]) && gettype($this->buttonActionMethods["add"]) == "object"){
+            if (isset($this->buttonActionMethods["add"]) && gettype($this->buttonActionMethods["add"]) == "object") {
                 $this->buttonActionMethods["add"]($this->db->last_insert_id());
             }
         }
     }
 
-    public function appendConfig($config,$overwrite = true) {
-        if(!is_array($config)){
+    public function appendConfig($config, $overwrite = true) {
+        if (!is_array($config)) {
             throw new \Exception(error(4));
         }
-        if($overwrite){
+        if ($overwrite) {
             $this->config = array_merge($config, $this->config);
-        }
-        else{
-            foreach ($config AS $key => $value){
-                $this->config[$key].=$value;
+        } else {
+            foreach ($config AS $key => $value) {
+                $this->config[$key] .= $value;
             }
         }
     }
@@ -250,8 +256,11 @@ class TableAdmin {
         $this->buttonActionMethods[$button] = $method;
     }
 
-    public function addMethodToTRClass() {
-        
+    public function addMethodToTRClass($method) {
+        if(gettype($method) != "object"){
+            return;
+        }
+        $this->trClassMethod[0] = $method;
     }
 
     public function addMethodToTDClass() {
@@ -259,7 +268,23 @@ class TableAdmin {
     }
 
     private function checkFormConfig() {
-        
+        /**
+         * 
+         */
+        if (isset($this->config["form"])) {
+            foreach ($this->config["form"] AS &$row) {
+                foreach ($row AS &$col) {
+                    $this->onlyFormCols[] = &$col;
+                }
+            }
+        }
+        if(!empty($this->onlyFormCols)){
+            foreach ($this->onlyFormCols as &$col) {
+                if(isset($col["sqlData"]) && !empty($col["sqlData"])){                    
+                    $col["data"] = $this->db->fromDatabase($col["sqlData"]);
+                }
+            }
+        }
     }
 
     public function addButton($name, $text, $action = NULL) {

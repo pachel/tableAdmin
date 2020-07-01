@@ -16,6 +16,12 @@
                         <textarea class="form-control" id="ta_form_<?=$col["name"]?>" placeholder="<?=$col["text"]?>" name="<?=$col["name"]?>"<?=(isset($col["required"]) && $col["required"])?" required=\"true\"":""?>>
                             <?=(isset($col["value"])?$col["value"]:(isset($result[$col["name"]])?$result[$col["name"]]:""))?>
                         </textarea>
+                        <?php elseif($col["type"] == "select"): ?>
+                        <select class="form-control" id="ta_form_<?=$col["name"]?>" name="<?=$col["name"]?>"<?=(isset($col["required"]) && $col["required"])?" required=\"true\"":""?>>
+                        <?php if(isset($col["data"])): foreach ($col["data"] AS $option):?>
+                            <option value="<?=$option["value"]?>"<?=(isset($result)?($result[$col["name"]] == $option["value"]?" selected=\"true\"":""):"")?>><?=$option["text"]?></option>
+                        <?php endforeach;endif;?>
+                        </select>                                
                         <?php elseif($col["type"] == "hidden"): ?>
                         <input type="hidden" class="form-control" id="ta_form_<?=$col["name"]?>" name="<?=$col["name"]?>" value="<?=(isset($col["value"])?$col["value"]:(isset($result[$col["name"]])?$result[$col["name"]]:""))?>">
                         <?php else: ?>

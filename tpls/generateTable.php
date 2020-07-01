@@ -12,7 +12,7 @@
     </thead>
     <tbody>
             <?php foreach ($this->data AS $row):?>
-            <tr>
+        <tr<?=(!empty($this->trClassMethod)?" class=\"".$this->trClassMethod[0]($row)."\"":"")?>>
             <?php foreach ($this->config["cols"] AS $sor): if(!isset($sor["visible"]) || $sor["visible"]):?>
             <td><?=$row[$sor["alias"]]?></td>
             <?php endif;endforeach;?>            
@@ -21,9 +21,9 @@
                 <a href="<?=$this->config["url"]."?ta_method=delete&key=".$this->key."&id=".$row[$this->config["id"]]?>" onclick="return confirm('Biztos hogy törli?')">Töröl</a>
                 <?php endif;?>
                 <a href="<?=$this->config["url"]."?ta_method=edit&key=".$this->key."&id=".$row[$this->config["id"]]?>">Szerkeszt</a>
-                <?php foreach ($this->buttons AS $button):?>
+                <?php foreach ($this->buttons AS $button):if($this->runMethods($button["name"],$row)):?>
                 <a href="<?=$this->config["url"]."?ta_method=".$button["name"]."&key=".$this->key."&id=".$row[$this->config["id"]]?>"><?=$button["text"]?></a>
-                <?php endforeach;?>
+                <?php endif;endforeach;?>
             </td>
             </tr>            
             <?php endforeach; ?>

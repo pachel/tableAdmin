@@ -1,0 +1,114 @@
+{
+    "baseUrl" : "",    
+    "url" : "szamlak.php",
+    "ajaxUrl" : "Penzugy/ajax",   
+    "tables" : ["p_szamlak AS sz","p_egyedek AS e"],
+    "where" : "sz.id_egyedek=e.id AND ( sz.statusz=1 OR sz.statusz=2)",
+    "last" : "ORDER BY sz.hatarido DESC",
+    "id" : "id",
+    "addButton" : true,
+    "cols": [
+        {
+            "name": "sz.id",
+            "text": "ID",
+            "alias": "id",
+            "visible": false
+        },
+        
+        {
+            "name": "sorszam",
+            "text": "Sorszám"
+        },
+        {
+            "name" : "@kibe:=IF(e.id_vevo=e.id_tulaj,'B','K')",
+            "alias" : "kibe",
+            "text" : "TIPUS",                        
+            "visible" : false
+        },
+        {
+            "name": "IF(@kibe='B','Bejövő','Kimenő')",
+            "alias" : "asd",
+            "text": "Tipus",
+            "visible" : false
+        },
+        {
+            "name": "IF(@kibe='B',(SELECT c.nev FROM p_cegek c WHERE c.id=e.id_szallito),(SELECT c.nev FROM p_cegek c WHERE c.id=e.id_vevo))",            
+            "alias" : "partner",
+            "text": "Partner"
+        },
+        {
+            "name": "teljesites",
+            "text": "Teljesítés dátuma"
+        },
+        {
+            "name" : "FORMAT(osszeg_netto*IF(@kibe='B',-1,1),2)",
+            "alias" : "netto",
+            "text" : "Nettó"
+        },
+        {
+            "name" : "FORMAT(osszeg_brutto*IF(@kibe='B',-1,1),2)",
+            "alias" : "brutto",
+            "text" : "Bruttó"
+        },
+        {
+            "name" : "(SELECT d.nev FROM p_devizak d WHERE d.id=sz.id_deviza)",
+            "alias" : "deviza",
+            "text" : "Deviza"
+        },
+        {
+            "name" : "@fizetve:=(SELECT SUM(pm.osszeg) FROM p_penzmozgasok pm WHERE pm.id_szamlak=sz.id)",
+            "alias" :"fizetve",
+            "text" : "Fizetve",
+            "visible" : false
+        },
+        {
+            "name" : "@fizetve:=IF(@fizetve IS NULL,0,@fizetve)",
+            "alias" :"fizetve2",
+            "text" : "Fizetve",
+            "visible" : false
+        },
+        {
+            "name" : "FORMAT(@fizetve,2)",
+            "alias" :"fizetve_text",
+            "text" : "Fizetve"            
+        },
+        {
+            "name" : "FORMAT(@fizetve-sz.osszeg_brutto,2)",
+            "alias" :"egyenleg",
+            "text" : "Egyenleg"            
+        }
+        
+    ],
+    "formTable" : "p_szamlak",    
+    "form": [
+        [
+            {
+                "name": "sorszam",
+                "text" : "Sorszám",
+                "type": "text",
+                "required" : true,
+                "bt_num" : 2
+            },
+            {
+                "name": "osszeg_netto",
+                "text":"Nettó összeg",
+                "type": "text",                
+                "bt_num" : 4
+            },
+            {
+                "name": "osszeg_brutto",
+                "text":"Bruttó összeg",
+                "type": "text",                
+                "bt_num" : 4
+            },
+            {
+                "name" : "id_deviza",
+                "text" : "Deviza",
+                "type" : "select",
+                "data" : [{"text":"HUF","value":2}],
+                "sqlData" : "SELECT id AS value,nev AS text FROM p_devizak",
+                "bt_num" : 2
+            }
+        ]
+    ]
+}
