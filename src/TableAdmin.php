@@ -184,11 +184,18 @@ class TableAdmin {
         }
     }
 
-    public function appendConfig($config) {
+    public function appendConfig($config,$overwrite = true) {
         if(!is_array($config)){
             throw new \Exception(error(4));
         }
-        $this->config = array_merge($config, $this->config);
+        if($overwrite){
+            $this->config = array_merge($config, $this->config);
+        }
+        else{
+            foreach ($config AS $key => $value){
+                $this->config[$key].=$value;
+            }
+        }
     }
 
     private function setQuery() {
