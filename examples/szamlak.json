@@ -84,30 +84,109 @@
         [
             {
                 "name": "sorszam",
-                "text" : "Sorszám",
+                "text": "Sorszám",
                 "type": "text",
-                "required" : true,
-                "bt_num" : 2
+                "required": true,
+                "bt_num": 2
             },
             {
                 "name": "osszeg_netto",
-                "text":"Nettó összeg",
+                "text": "Nettó összeg",
                 "type": "text",                
-                "bt_num" : 4
+                "bt_num": 4
             },
             {
                 "name": "osszeg_brutto",
-                "text":"Bruttó összeg",
+                "text": "Bruttó összeg",
                 "type": "text",                
-                "bt_num" : 4
+                "bt_num": 4
             },
             {
-                "name" : "id_deviza",
-                "text" : "Deviza",
-                "type" : "select",
-                "data" : [{"text":"HUF","value":2}],
-                "sqlData" : "SELECT id AS value,nev AS text FROM p_devizak",
-                "bt_num" : 2
+                "name": "id_deviza",
+                "text": "Deviza",
+                "type": "select",
+                "data": [{
+                        "text": "HUF",
+                        "value": 2
+                    }],
+                "sqlData": "SELECT id AS value,nev AS text,IF(nev='HUF',1,0) AS `default` FROM p_devizak",
+                "bt_num": 2
+            }
+        ],
+        [
+            {
+                "name": "id_partner",
+                "text": "Partner",
+                "type": "select",
+                "bt_num" : 4, 
+                "sqlData" : "SELECT id AS value,nev AS text FROM p_szamla_tipusok ORDER BY nev",
+                "noSave" : true
+            },
+            {
+                "name": "statusz",
+                "text": "Státusz",
+                "type": "select",
+                "bt_num" : 2,
+                "data": [
+                    {
+                        "text": "Törölt",
+                        "value": 0
+                    },
+                    {
+                        "text": "Aktív",
+                        "value": 1,
+                        "default": true
+                    },
+                    {
+                        "text": "Véglegesített",
+                        "value": 2
+                    }
+                ]
+            },
+            {
+                "name": "id_szamla_tipusok",
+                "text": "Tipus",
+                "type": "select",
+                "bt_num" : 2, 
+                "sqlData" : "SELECT id AS value,nev AS text FROM p_szamla_tipusok ORDER BY nev"
+            },
+            {
+                "name": "id_koltseg_tipusok",
+                "text": "PROF.CENT",
+                "type": "select",
+                "bt_num" : 2, 
+                "sqlData" : "SELECT id AS value,nev AS text FROM p_koltseg_tipusok ORDER BY nev"
+            },
+            {
+                "name": "id_fizetes_tipusok",
+                "text": "FIZ.MOD",
+                "type": "select",
+                "bt_num" : 2, 
+                "sqlData" : "SELECT id AS value,nev AS text FROM p_fizetes_tipusok ORDER BY nev"
+            }
+        ],
+        [
+            {
+                "name" : "teljesites",
+                "text" : "Teljesítés",
+                "type" : "date"
+            },
+            {
+                "name" : "beerkezes",
+                "text" : "Beérkezés",
+                "type" : "date"
+            },
+            {
+                "name" : "hatarido",
+                "text" : "Határidő",
+                "type" : "date"
+            }
+        ],
+        [
+            {
+                "name": "megjegyzes",
+                "text": "Megjegyzés",
+                "type": "textarea"                
             }
         ]
     ]

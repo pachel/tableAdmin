@@ -38,6 +38,7 @@ class TableAdmin {
     private $data = [];
     private $key = "";
     private $keyfile = "";
+
     /**
      * pointers to form config
      * @var array
@@ -64,8 +65,8 @@ class TableAdmin {
      * @var array
      */
     private $buttons = []; /* ["name"=>"verk","text"=>"VERKBE"] */
-
     private $trClassMethod = [];
+
     /**
      * 
      * @param type pachel/dbClass
@@ -170,14 +171,31 @@ class TableAdmin {
         }
     }
 
+    public function addBeforeActionMehod($button, $method) {
+        
+    }
+
+    private function ifnosave($name) {
+        if (empty($this->onlyFormCols) || !is_array($this->onlyFormCols)) {
+            return false;
+        }
+        foreach ($this->onlyFormCols AS &$col) {
+            if ($col["name"] == $name && isset($col["noSave"]) && $col["noSave"]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private function saveForm() {
         $elements = $this->getFormElements();
         $data = [];
         foreach ($elements AS $name) {
-            if (isset($_POST[$name])) {
+            if (isset($_POST[$name]) && !$this->ifnosave($name)) {
                 $data[$name] = $_POST[$name];
             }
         }
+
         if ($_GET["ta_method"] == "edit") {
             $this->db->update($this->config["formTable"], $data, [$this->config["id"] => $_GET["id"]]);
             if (isset($this->buttonActionMethods["edit"]) && gettype($this->buttonActionMethods["edit"]) == "object") {
@@ -257,7 +275,7 @@ class TableAdmin {
     }
 
     public function addMethodToTRClass($method) {
-        if(gettype($method) != "object"){
+        if (gettype($method) != "object") {
             return;
         }
         $this->trClassMethod[0] = $method;
@@ -278,9 +296,9 @@ class TableAdmin {
                 }
             }
         }
-        if(!empty($this->onlyFormCols)){
+        if (!empty($this->onlyFormCols)) {
             foreach ($this->onlyFormCols as &$col) {
-                if(isset($col["sqlData"]) && !empty($col["sqlData"])){                    
+                if (isset($col["sqlData"]) && !empty($col["sqlData"])) {
                     $col["data"] = $this->db->fromDatabase($col["sqlData"]);
                 }
             }
@@ -324,12 +342,15 @@ class TableAdmin {
     private function generateSelectToForm() {
         $sql = "SELECT ";
         $elements = $this->getFormElements();
-
+        $counter = 0;
         foreach ($elements as $index => $col) {
-            if ($index > 0) {
-                $sql .= ",";
+            if (!$this->ifnosave($col)) {
+                if ($counter > 0) {
+                    $sql .= ",";
+                }
+                $sql .= $col;
+                $counter++;
             }
-            $sql .= $col;
         }
 
         $sql .= " FROM " . $this->config["formTable"];
@@ -341,6 +362,8 @@ class TableAdmin {
         if (empty($this->config)) {
             throw new \Exception(error(0));
         }
+        $this->checkFormConfig();
+
         $this->runActions();
 
         if (!isset($_GET["ta_method"])) {
@@ -348,11 +371,10 @@ class TableAdmin {
             require __DIR__ . "/../tpls/generateTable.php";
             require __DIR__ . "/../tpls/datatable.js.php";
         } elseif ($_GET["ta_method"] == "edit") {
-            $this->checkFormConfig();
+
             $result = $this->db->fromDatabase($this->generateSelectToForm(), "@line");
             require __DIR__ . "/../tpls/editForm.php";
         } elseif ($_GET["ta_method"] == "add") {
-            $this->checkFormConfig();
             require __DIR__ . "/../tpls/editForm.php";
         }
     }
