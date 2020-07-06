@@ -334,6 +334,9 @@ class TableAdmin {
     }
 
     private function runMethods($button, $row) {
+        if(!isset($this->methods[$button]) || !is_array($this->methods[$button])){
+            return true;
+        }
         foreach ($this->methods[$button] AS &$method) {
             if (!$method($row)) {
                 return false;
