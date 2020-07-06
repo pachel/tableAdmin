@@ -6,10 +6,10 @@
  */
 
 namespace pachel;
+
 session_start();
 error_reporting(E_ALL);
-ini_set("display_errors",true);
-
+ini_set("display_errors", true);
 ?>
 <html>
     <head>
@@ -36,10 +36,13 @@ ini_set("display_errors",true);
                 "username" => "persons2",
                 "password" => "Jsx_Juz_cv.7867"
             ]);
-            $tdadmin = new TableAdmin($db);                        
+            $tdadmin = new TableAdmin($db);
             $tdadmin->loadConfig(__DIR__ . "/szamlak.json");
-            $tdadmin->addMethodToTRClass(function($row){
-                if($row["egyenleg"]<0){
+            $cegek = $db->fromDatabase("SELECT id AS value,nev AS text FROM p_cegek WHERE statusz=1 ORDER BY nev ASC");
+            $d["form"][1][0]["data"] = $cegek;
+            $tdadmin->appendConfig($d);
+            $tdadmin->addMethodToTRClass(function($row) {
+                if ($row["egyenleg"] < 0) {
                     return "nemfizetve";
                 }
             });

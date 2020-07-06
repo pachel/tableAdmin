@@ -119,7 +119,7 @@
                 "text": "Partner",
                 "type": "select",
                 "bt_num" : 4, 
-                "sqlData" : "SELECT id AS value,nev AS text FROM p_szamla_tipusok ORDER BY nev",
+                
                 "noSave" : true
             },
             {

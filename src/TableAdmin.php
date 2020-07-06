@@ -214,14 +214,32 @@ class TableAdmin {
             throw new \Exception(error(4));
         }
         if ($overwrite) {
-            $this->config = array_merge($config, $this->config);
+            //$this->config = array_merge($this->config,$config);
+            $this->addValuesToConfig($config);
         } else {
+            
             foreach ($config AS $key => $value) {
                 $this->config[$key] .= $value;
             }
+        }        
+    }
+    private function addValuesToConfig($array,&$config = null) {
+        if(!is_array($array)){
+            return;            
+        }
+        if(empty($config)){
+            $config = &$this->config;
+        }
+        $keys[] = key($array);
+        foreach ($keys as $key) {
+            if(!isset($config[$key])){
+                $config[$key] = $array[$key];
+            }
+            else{
+                $this->addValuesToConfig($array[$key], $config[$key]);
+            }
         }
     }
-
     private function setQuery() {
         $sql = "SELECT ";
 
