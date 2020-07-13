@@ -8,7 +8,9 @@
 <form method="post">
     <?php foreach ($this->config["form"] AS $row): ?>
         <div class="row">
-            <?php foreach ($row AS $col): ?>
+            <?php foreach ($row AS $col): if($col["type"] == "hidden"):?>
+            <input type="hidden" id="ta_form_<?=$col["name"]?>" name="<?=$col["name"]?>" value="<?=(isset($col["value"])?$col["value"]:(isset($result[$col["name"]])?$result[$col["name"]]:""))?>">
+            <?php else :?>
             <div class="col<?=(isset($col["bt_num"])?"-".$col["bt_num"]:"")?>">
                     <div class="form-group">
                         <label><?=$col["text"]?></label>
@@ -26,8 +28,8 @@
                         <input type="<?=$col["type"]?>" class="form-control" id="ta_form_<?=$col["name"]?>" placeholder="<?=$col["text"]?>" name="<?=$col["name"]?>"<?=(isset($col["required"]) && $col["required"])?" required=\"true\"":""?> value="<?=(isset($col["value"])?$col["value"]:(isset($result[$col["name"]])?$result[$col["name"]]:""))?>">
                         <?php endif;?>
                     </div>
-                </div>
-            <?php endforeach; ?>  
+                </div>            
+            <?php endif; endforeach; ?>  
         </div>
     <?php endforeach; ?>  
     <div class="row">

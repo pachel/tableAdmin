@@ -232,7 +232,7 @@ class TableAdmin {
         }
         $keys[] = key($array);
         foreach ($keys as $key) {
-            if(!isset($config[$key])){
+            if(!isset($config[$key]) || !is_numeric($array[$key])){
                 $config[$key] = $array[$key];
             }
             else{
@@ -389,7 +389,9 @@ class TableAdmin {
 
         if (!isset($_GET["ta_method"])) {
             $this->setData();
+            
             require __DIR__ . "/../tpls/generateTable.php";
+            
             require __DIR__ . "/../tpls/datatable.js.php";
         } elseif ($_GET["ta_method"] == "edit") {
 
