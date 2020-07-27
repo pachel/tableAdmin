@@ -216,6 +216,7 @@ class TableAdmin {
         if ($overwrite) {
             //$this->config = array_merge($this->config,$config);
             $this->addValuesToConfig($config);
+            
         } else {
             
             foreach ($config AS $key => $value) {
@@ -232,8 +233,8 @@ class TableAdmin {
         }
         $keys[] = key($array);
         foreach ($keys as $key) {
-            if(!isset($config[$key]) || !is_numeric($array[$key])){
-                $config[$key] = $array[$key];
+            if(!isset($config[$key]) || !is_array($array[$key])){
+                $config[$key] = $array[$key];                
             }
             else{
                 $this->addValuesToConfig($array[$key], $config[$key]);
