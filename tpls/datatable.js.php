@@ -1,6 +1,7 @@
 <script>
+    var dt;
     window.onload = function () {
-        var dt = $("#datatables").DataTable({
+        dt = $("#datatables").DataTable({
             "ordering": false             
         });        
     }
