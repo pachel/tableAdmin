@@ -7,7 +7,9 @@
             <?php foreach ($this->config["cols"] AS $sor): if(!isset($sor["visible"]) || $sor["visible"]):?>
             <th><?=$sor["text"]?></th>
             <?php endif;endforeach; ?>
+            <?php if(isset($this->config["form"]) && !empty($this->config["form"])):?>
             <th>Műveletek</th>
+            <?php endif; ?>
         </tr>
     </thead>
     <tbody>
@@ -16,6 +18,7 @@
             <?php foreach ($this->config["cols"] AS $sor): if(!isset($sor["visible"]) || $sor["visible"]):?>
             <td><?=$row[$sor["alias"]]?></td>
             <?php endif;endforeach;?>            
+            <?php if(isset($this->config["form"]) && !empty($this->config["form"])):?>                        
             <td>
                 <?php if($this->runMethods("delete",$row)):?>
                 [<a href="<?=$this->config["url"]."?ta_method=delete&key=".$this->key."&id=".$row[$this->config["id"]]?>" onclick="return confirm('Biztos hogy törli?')">Töröl</a>]
@@ -27,6 +30,7 @@
                 [<a href="<?=$this->config["url"]."?ta_method=".$button["name"]."&key=".$this->key."&id=".$row[$this->config["id"]]?>"><?=$button["text"]?></a>]
                 <?php endif;endforeach;?>
             </td>
+            <?php endif; ?>
             </tr>            
             <?php endforeach; ?>
     </tbody>
@@ -35,7 +39,9 @@
              <?php foreach ($this->config["cols"] AS $sor): if(!isset($sor["visible"]) || $sor["visible"]):?>
             <th><?=$sor["text"]?></th>
             <?php endif;endforeach; ?>
+            <?php if(isset($this->config["form"]) && !empty($this->config["form"])):?>
             <th>Műveletek</th>
+            <?php endif; ?>
         </tr>
     </tfoot>
 </table>
