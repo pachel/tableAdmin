@@ -38,7 +38,8 @@ class TableAdmin {
     private $data = [];
     private $key = "";
     private $keyfile = "";
-
+    
+    private $custom_buttons = 0;
     /**
      * pointers to form config
      * @var array
@@ -325,12 +326,14 @@ class TableAdmin {
     }
 
     public function addButton($name, $text, $action = NULL) {
+        
         if (!empty($action) && gettype($action) == "object") {
             $this->addButtonActionMethod($name, $action);
             //$this->buttonMethods[$name] = $action;
         }
         if ($name != "delete" && $name != "edit" && $name != "add") {
             $this->buttons[] = ["name" => $name, "text" => $text];
+            $this->custom_buttons++;
         }
     }
 
