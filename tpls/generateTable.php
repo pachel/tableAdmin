@@ -27,7 +27,7 @@
                 [<a href="<?=$this->config["url"]."?ta_method=edit&key=".$this->key."&id=".$row[$this->config["id"]]?>">Szerkeszt</a>]
                 <?php endif;?>
                 <?php foreach ($this->buttons AS $button):if($this->runMethods($button["name"],$row)):?>
-                [<a href="<?=$this->config["url"]."?ta_method=".$button["name"]."&key=".$this->key."&id=".$row[$this->config["id"]]?>"><?=$button["text"]?></a>]
+                [<a href="<?=$this->config["url"]."?ta_method=".$button["name"]."&key=".$this->key."&id=".$row[$this->config["id"]]?>" target="<?=$button["target"]?>"><?=$button["text"]?></a>]
                 <?php endif;endforeach;?>
             </td>
             <?php endif; ?>

@@ -217,6 +217,7 @@ class TableAdmin {
         if ($overwrite) {
             //$this->config = array_merge($this->config,$config);
             $this->addValuesToConfig($config);
+           // print_r($this->config);
             
         } else {
             
@@ -232,8 +233,9 @@ class TableAdmin {
         if(empty($config)){
             $config = &$this->config;
         }
-        $keys[] = key($array);
+        $keys[] = key($array);        
         foreach ($keys as $key) {
+            
             if(!isset($config[$key]) || !is_array($array[$key])){
                 $config[$key] = $array[$key];                
             }
@@ -325,14 +327,14 @@ class TableAdmin {
         }
     }
 
-    public function addButton($name, $text, $action = NULL) {
+    public function addButton($name, $text, $action = NULL,$link_target = "_self") {
         
         if (!empty($action) && gettype($action) == "object") {
             $this->addButtonActionMethod($name, $action);
             //$this->buttonMethods[$name] = $action;
         }
         if ($name != "delete" && $name != "edit" && $name != "add") {
-            $this->buttons[] = ["name" => $name, "text" => $text];
+            $this->buttons[] = ["name" => $name, "text" => $text,"target"=>$link_target];
             $this->custom_buttons++;
         }
     }
@@ -350,7 +352,8 @@ class TableAdmin {
     }
 
     private function setData() {
-        $this->setQuery();
+        
+        $this->setQuery();        
         $this->data = $this->db->fromDatabase($this->sql_query);
     }
 
@@ -390,7 +393,7 @@ class TableAdmin {
         $this->checkFormConfig();
 
         $this->runActions();
-
+        
         if (!isset($_GET["ta_method"])) {
             $this->setData();
             
