@@ -385,7 +385,9 @@ class TableAdmin {
         $sql .= " WHERE " . $this->config["id"] . "=" . $_GET["id"];
         return $sql;
     }
-
+    public function getJS(){
+        echo "<script type=\"text/javascript\" src=\"".$this->getDirName()."/js/datatables.min.js\"></script>";
+    }
     public function show() {
         if (empty($this->config)) {
             throw new \Exception(error(0));
@@ -408,5 +410,9 @@ class TableAdmin {
             require __DIR__ . "/../tpls/editForm.php";
         }
     }
+    private function getDirName(){
 
+        $root = str_replace($_SERVER["DOCUMENT_ROOT"],'',str_replace(["\\","/src"],["/",""],__DIR__));
+        return $_SERVER["REQUEST_SCHEME"]."://".$_SERVER["SERVER_NAME"].$root."";
+    }
 }

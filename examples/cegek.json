@@ -6,6 +6,39 @@
     "last" : "ORDER BY nev ASC",
     "id" : "id",
     "addButton" : true,
+    "datatables" : {
+        "dom" : "Bfrtip",
+        "buttons": [
+            {
+                "extend": "pdf",
+                "text": "PDF",
+                "autoFilter": true,
+                "sheetName": "PDF export",
+                "exportOptions": {
+                    "columns": [ 0, 1, 2,3 ]
+                }
+            },
+            {
+                "extend": "excel",
+                "text": "XLS",
+                "autoFilter": true,
+                "sheetName": "XLS export",
+                "exportOptions": {
+                    "columns": [ 0, 1, 2,3 ]
+                }
+            },
+            {
+                "extend": "print",
+                "text": "Nyomtatás",
+                "autoFilter": true,
+                "sheetName": "XLS export",
+                "exportOptions": {
+                    "columns": [ 0, 1, 2,3 ]
+                }
+            }
+        ]
+
+    },
     "cols": [
         {
             "name": "id",

@@ -3,7 +3,6 @@
     "description": "Table content editor",
     "require": {
         "pachel/dbclass": "dev-master",
-        "datatables/datatables": "^1.10",
         "components/jquery": "^3.5",
         "twbs/bootstrap": "^4.5"
     },
