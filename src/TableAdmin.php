@@ -14,23 +14,24 @@
 
 namespace pachel;
 
-class TableAdmin {
+class TableAdmin
+{
 
     /**
      *  Ide lesznek betöltve a konfig adatok
-     * @var type 
+     * @var type
      */
     private $config = [];
 
     /**
      * Legenerált SQL QUERY a konfigból
-     * @var type 
+     * @var type
      */
     private $sql_query = "";
 
     /**
      * pachel/dbClass object
-     * @var type 
+     * @var type
      */
     private $db;
     private static $self;
@@ -38,7 +39,9 @@ class TableAdmin {
     private $data = [];
     private $key = "";
     private $keyfile = "";
-    
+
+    private $keyCheck = true;
+
     private $custom_buttons = 0;
     /**
      * pointers to form config
@@ -62,17 +65,18 @@ class TableAdmin {
     private $buttonActionMethods = ["delete" => []];
 
     /**
-     *  Extra gombok, 
+     *  Extra gombok,
      * @var array
      */
     private $buttons = []; /* ["name"=>"verk","text"=>"VERKBE"] */
     private $trClassMethod = [];
 
     /**
-     * 
+     *
      * @param type pachel/dbClass
      */
-    public function __construct(&$db = null) {
+    public function __construct(&$db = null)
+    {
         if ($db != null) {
             $this->db = &$db;
         }
@@ -88,10 +92,11 @@ class TableAdmin {
     }
 
     /**
-     * 
+     *
      * @return type
      */
-    public static function instance() {
+    public static function instance()
+    {
         if (empty(self::$self)) {
             $ref = new \Reflectionclass("pachel\TableAdmin");
             $args = func_get_args();
@@ -101,10 +106,11 @@ class TableAdmin {
     }
 
     /**
-     * 
+     *
      * @param type $config
      */
-    public function loadConfig($config) {
+    public function loadConfig($config)
+    {
         if (is_array($config)) {
             $this->config = $config;
             return;
@@ -116,23 +122,27 @@ class TableAdmin {
                 throw new \Exception(error(1));
             }
         }
-        foreach ($this->config["cols"] AS &$col) {
+        foreach ($this->config["cols"] as &$col) {
             if (!isset($col["alias"])) {
                 $col["alias"] = $col["name"];
             }
         }
+        if (isset($this->config["keycheck"]) && !$this->config["keycheck"]) {
+            $this->keyCheck = false;
+        }
     }
 
-    private function runActions() {
+    private function runActions()
+    {
         if (isset($_POST) && !empty($_POST)) {
             if ($_GET["ta_method"] == "edit") {
-                if ($_GET["key"] == $this->key) {
+                if ($_GET["key"] == $this->key || !$this->keyCheck) {
                     $this->saveForm();
                 } else {
                     throw new \Exception(error(2));
                 }
             } elseif ($_GET["ta_method"] == "add") {
-                if ($_GET["key"] == $this->key) {
+                if ($_GET["key"] == $this->key || !$this->keyCheck) {
                     $this->saveForm();
                     header("location:" . $this->config["baseUrl"] . $this->config["url"]);
                     exit();
@@ -140,12 +150,12 @@ class TableAdmin {
                     throw new \Exception(error(2));
                 }
             } else {
-                
+
             }
         }
 
         if (isset($_GET["ta_method"]) && $_GET["ta_method"] == "delete") {
-            if ($_GET["key"] == $this->key) {
+            if ($_GET["key"] == $this->key || !$this->keyCheck) {
 
                 if (isset($this->buttonActionMethods["delete"]) && gettype($this->buttonActionMethods["delete"]) == "object") {
 
@@ -161,7 +171,7 @@ class TableAdmin {
             }
         }
         if (isset($_GET["ta_method"]) && $_GET["ta_method"] != "edit" && $_GET["ta_method"] != "add") {
-            if ($_GET["key"] == $this->key) {
+            if ($_GET["key"] == $this->key || !$this->keyCheck) {
                 if (isset($this->buttonActionMethods[$_GET["ta_method"]]) && gettype($this->buttonActionMethods[$_GET["ta_method"]]) == "object") {
                     $this->buttonActionMethods[$_GET["ta_method"]]($_GET["id"]);
                 }
@@ -172,15 +182,17 @@ class TableAdmin {
         }
     }
 
-    public function addBeforeActionMehod($button, $method) {
-        
+    public function addBeforeActionMehod($button, $method)
+    {
+
     }
 
-    private function ifnosave($name) {
+    private function ifnosave($name)
+    {
         if (empty($this->onlyFormCols) || !is_array($this->onlyFormCols)) {
             return false;
         }
-        foreach ($this->onlyFormCols AS &$col) {
+        foreach ($this->onlyFormCols as &$col) {
             if ($col["name"] == $name && isset($col["noSave"]) && $col["noSave"]) {
                 return true;
             }
@@ -188,10 +200,11 @@ class TableAdmin {
         return false;
     }
 
-    private function saveForm() {
+    private function saveForm()
+    {
         $elements = $this->getFormElements();
         $data = [];
-        foreach ($elements AS $name) {
+        foreach ($elements as $name) {
             if (isset($_POST[$name]) && !$this->ifnosave($name)) {
                 $data[$name] = $_POST[$name];
             }
@@ -210,52 +223,57 @@ class TableAdmin {
         }
     }
 
-    public function appendConfig($config, $overwrite = true) {
+    public function appendConfig($config, $overwrite = true)
+    {
         if (!is_array($config)) {
             throw new \Exception(error(4));
         }
         if ($overwrite) {
             //$this->config = array_merge($this->config,$config);
             $this->addValuesToConfig($config);
-           // print_r($this->config);
-            
+            // print_r($this->config);
+
         } else {
-            
-            foreach ($config AS $key => $value) {
+
+            foreach ($config as $key => $value) {
                 $this->config[$key] .= $value;
             }
-        }        
-    }
-    private function addValuesToConfig($array,&$config = null) {
-        if(!is_array($array)){
-            return;            
         }
-        if(empty($config)){
+    }
+
+    private function addValuesToConfig($array, &$config = null)
+    {
+        if (!is_array($array)) {
+            return;
+        }
+        if (empty($config)) {
             $config = &$this->config;
         }
-        $keys[] = key($array);        
+        $keys[] = key($array);
         foreach ($keys as $key) {
-            
-            if(!isset($config[$key]) || !is_array($array[$key])){
-                $config[$key] = $array[$key];                
-            }
-            else{
+
+            if (!isset($config[$key]) || !is_array($array[$key])) {
+                $config[$key] = $array[$key];
+            } else {
                 $this->addValuesToConfig($array[$key], $config[$key]);
             }
         }
     }
-    private function setQuery() {
+
+    private function setQuery($limit = [])
+    {
+
         $sql = "SELECT ";
 
-        foreach ($this->config["cols"] AS $index => $col) {
+        foreach ($this->config["cols"] as $index => $col) {
             $this->cols[] = ["text" => $col["text"]];
             if ($index > 0) {
                 $sql .= ",";
             }
             $sql .= $col["name"] . (isset($col["alias"]) ? " AS " . $col["alias"] : "");
         }
-        $sql .= " FROM ";
-        foreach ($this->config["tables"] AS $index => $table) {
+        $sql .= ",'' tb___buttons FROM ";
+        foreach ($this->config["tables"] as $index => $table) {
             if ($index > 0) {
                 $sql .= ",";
             }
@@ -264,19 +282,42 @@ class TableAdmin {
         if (isset($this->config["where"]) && !empty($this->config["where"])) {
             $sql .= " WHERE " . $this->config["where"];
         }
+        if (isset($limit["search"]) && !empty($limit["search"]["value"])) {
+
+            $sql .= " AND (";
+            foreach ($this->config["cols"] as $index => $col) {
+                if ($index > 0) {
+                    $sql .= " OR ";
+                }
+                $sql .= $col["name"] . " LIKE '%" . $limit["search"]["value"] . "%'";
+            }
+            $sql .= ")";
+
+        }
         if (isset($this->config["last"])) {
             $sql .= " " . $this->config["last"];
         }
+        if (!empty($limit) && isset($limit["start"]) && isset($limit["length"])) {
+            if (!empty($limit["order"])) {
+                $sql = preg_replace("/order by [^ ]+$/i", "", $sql);
+                $sql .= " ORDER BY " . $this->config["cols"][$limit["order"]["column"]]["alias"] . " " . $limit["order"]["dir"];
+            }
+            $sql .= " LIMIT " . $limit["start"] . "," . $limit["length"];
+            //  die($sql);
+        }
+
+
         $this->sql_query = $sql;
     }
 
     /**
-     * 
+     *
      * @param type object
      * @param type string delete|edit
      * @return type
      */
-    public function addMethodToButtonsIfVisible($method, $button/* delete|edit */) {
+    public function addMethodToButtonsIfVisible($method, $button/* delete|edit */)
+    {
         if (gettype($method) != "object") {
             return;
         }
@@ -284,36 +325,40 @@ class TableAdmin {
     }
 
     /**
-     * 
+     *
      * @param type $method
      * @param type $button
      * @return type
      */
-    public function addButtonActionMethod($button, $method) {
+    public function addButtonActionMethod($button, $method)
+    {
         if (gettype($method) != "object") {
             return;
         }
         $this->buttonActionMethods[$button] = $method;
     }
 
-    public function addMethodToTRClass($method) {
+    public function addMethodToTRClass($method)
+    {
         if (gettype($method) != "object") {
             return;
         }
         $this->trClassMethod[0] = $method;
     }
 
-    public function addMethodToTDClass() {
-        
+    public function addMethodToTDClass()
+    {
+
     }
 
-    private function checkFormConfig() {
+    private function checkFormConfig()
+    {
         /**
-         * 
+         *
          */
         if (isset($this->config["form"])) {
-            foreach ($this->config["form"] AS &$row) {
-                foreach ($row AS &$col) {
+            foreach ($this->config["form"] as &$row) {
+                foreach ($row as &$col) {
                     $this->onlyFormCols[] = &$col;
                 }
             }
@@ -327,23 +372,25 @@ class TableAdmin {
         }
     }
 
-    public function addButton($name, $text, $action = NULL,$link_target = "_self") {
-        
+    public function addButton($name, $text, $action = NULL, $link_target = "_self")
+    {
+
         if (!empty($action) && gettype($action) == "object") {
             $this->addButtonActionMethod($name, $action);
             //$this->buttonMethods[$name] = $action;
         }
         if ($name != "delete" && $name != "edit" && $name != "add") {
-            $this->buttons[] = ["name" => $name, "text" => $text,"target"=>$link_target];
+            $this->buttons[] = ["name" => $name, "text" => $text, "target" => $link_target];
             $this->custom_buttons++;
         }
     }
 
-    private function runMethods($button, $row) {
-        if(!isset($this->methods[$button]) || !is_array($this->methods[$button])){
+    private function runMethods($button, $row)
+    {
+        if (!isset($this->methods[$button]) || !is_array($this->methods[$button])) {
             return true;
         }
-        foreach ($this->methods[$button] AS &$method) {
+        foreach ($this->methods[$button] as &$method) {
             if (!$method($row)) {
                 return false;
             }
@@ -351,15 +398,39 @@ class TableAdmin {
         return true;
     }
 
-    private function setData() {
-        
-        $this->setQuery();        
-        $this->data = $this->db->fromDatabase($this->sql_query);
+    private function checkSearchSessions($search)
+    {
+        $live = 20 * 3600;//sec
+        $hash = md5($search);
+        if (isset($_SESSION["search_____"][$hash]) && $_SESSION["search_____"][$hash]["time"] > time() - $live) {
+            return true;
+        } else {
+            $_SESSION["search_____"][$hash]["time"] = time();
+            return false;
+        }
     }
 
-    private function getFormElements() {
+    private function setData($limit = [], $type = null)
+    {
+        if (!empty($limit)) {
+            if ($limit["draw"] == 1) {
+                $this->setQuery();
+                $this->data = $this->db->fromDatabase($this->sql_query, $type);
+                $_SESSION["recordsTotal"] = count($this->data);
+                $_SESSION["recordsFiltered"] = $_SESSION["recordsTotal"];
+            }
+            $this->setQuery($limit);
+
+        } else {
+            $this->setQuery();
+        }
+        $this->data = $this->db->fromDatabase($this->sql_query, $type);
+    }
+
+    private function getFormElements()
+    {
         $elements = [];
-        foreach ($this->config["form"] AS $row) {
+        foreach ($this->config["form"] as $row) {
             foreach ($row as $col) {
                 $elements[] = $col["name"];
             }
@@ -367,7 +438,8 @@ class TableAdmin {
         return $elements;
     }
 
-    private function generateSelectToForm() {
+    private function generateSelectToForm()
+    {
         $sql = "SELECT ";
         $elements = $this->getFormElements();
         $counter = 0;
@@ -385,23 +457,26 @@ class TableAdmin {
         $sql .= " WHERE " . $this->config["id"] . "=" . $_GET["id"];
         return $sql;
     }
-    public function getJS(){
-        echo "<script type=\"text/javascript\" src=\"".$this->getDirName()."/js/datatables.min.js\"></script>";
+
+    public function getJS()
+    {
+        echo "<script type=\"text/javascript\" src=\"" . $this->getDirName() . "/js/datatables.min.js\"></script>";
     }
-    public function show() {
+
+    public function show()
+    {
         if (empty($this->config)) {
             throw new \Exception(error(0));
         }
         $this->checkFormConfig();
 
         $this->runActions();
-        
+
         if (!isset($_GET["ta_method"])) {
             $this->setData();
-            
             require __DIR__ . "/../tpls/generateTable.php";
-            
             require __DIR__ . "/../tpls/datatable.js.php";
+
         } elseif ($_GET["ta_method"] == "edit") {
 
             $result = $this->db->fromDatabase($this->generateSelectToForm(), "@line");
@@ -410,9 +485,139 @@ class TableAdmin {
             require __DIR__ . "/../tpls/editForm.php";
         }
     }
-    private function getDirName(){
 
-        $root = str_replace($_SERVER["DOCUMENT_ROOT"],'',str_replace(["\\","/src"],["/",""],__DIR__));
-        return $_SERVER["REQUEST_SCHEME"]."://".$_SERVER["SERVER_NAME"].$root."";
+    public function checkAjaxRequest()
+    {
+        $this->checkFormConfig();
+        $this->runActions();
+
+        if (isset($_POST["draw"])) {
+            $limit = [
+                "start" => $_POST["start"],
+                "length" => $_POST["length"],
+                "draw" => $_POST["draw"],
+                "search" => $_POST["search"],
+                "order" => (isset($_POST["order"][0]) ? $_POST["order"][0] : null)
+            ];
+            $this->setData($limit);
+            $data_array = [];
+            if(!empty($this->data)){
+                foreach ($this->data AS &$row){
+                    $buttons = $this->generateButtons($row);
+
+                    $row2 = [];
+                    foreach ($row AS $value){
+                        $row2[] = $value;
+                    }
+                    if(empty($buttons)){
+                        //unset($row["tb___buttons"]);
+                    }
+                    else{
+
+                        $row2[count($row)-1] = $buttons;
+                    }
+                    $data_array[] = $row2;
+                }
+            }
+            header('Content-Type: application/json;charset=utf-8');
+            $data = [
+                "draw" => $_POST["draw"],
+                "recordsTotal" => $_SESSION["recordsTotal"],
+                "recordsFiltered" => $_SESSION["recordsFiltered"],
+                "data" => $data_array
+
+            ];
+
+            echo json_encode($data, JSON_PRETTY_PRINT);
+            die();
+        }
+    }
+
+    private function generateButtons($row)
+    {
+        $html = "";
+        if ((isset($this->config["form"]) && !empty($this->config["form"])) || $this->custom_buttons > 0):
+            $html = "<td>";
+            if ((isset($this->config["form"]) && !empty($this->config["form"])) && $this->runMethods("delete", $row)):
+                $html .= "[<a href=\"" . $this->config["url"] . "?ta_method=delete&key=" . $this->key . "&id=" . $row[$this->config["id"]] . "\" onclick=\"return confirm('Biztos hogy törli?')\">Töröl</a>]";
+            endif;
+            if ((isset($this->config["form"]) && !empty($this->config["form"])) && $this->runMethods("edit", $row)):
+                $html .= "[<a href=\"" . $this->config["url"] . "?ta_method=edit&key=" . $this->key . "&id=" . $row[$this->config["id"]] . "\">Szerkeszt</a>]";
+            endif;
+            foreach ($this->buttons as $button):if ($this->runMethods($button["name"], $row)):
+                $html .= "[<a href=\"" . $this->config["url"] . "?ta_method=" . $button["name"] . "&key=" . $this->key . "&id=" . $row[$this->config["id"]] . "\" target=\"" . $button["target"] . "\">" . $button["text"] . "</a>]";
+            endif;endforeach;
+            $html .= "</td>";
+        endif;
+        return $html;
+    }
+
+    private function getDirName()
+    {
+
+        $root = str_replace($_SERVER["DOCUMENT_ROOT"], '', str_replace(["\\", "/src"], ["/", ""], __DIR__));
+        return $_SERVER["REQUEST_SCHEME"] . "://" . $_SERVER["SERVER_NAME"] . $root . "";
+    }
+
+    private function getAjaxData()
+    {
+        $data = [];
+        foreach ($this->data as $item) {
+            $rc = [];
+            foreach ($item as $row) {
+                $rc[] = $row;
+            }
+            $rc[] = "";
+            $data[] = $rc;
+        }
+        return $data;
+    }
+
+    private function addParamaterToWhere($param)
+    {
+        if (empty($param)) {
+            return;
+        }
+        $having = " HAVING ";
+        if (!empty($this->config["last"])) {
+            //$where = " AND ";
+        }
+        if (!is_array($param)) {
+            $having .= "(";
+            foreach ($this->config["cols"] as $index => $col) {
+                if ($index > 0) {
+                    $having .= " OR ";
+                }
+                $having .= "`" . $col["alias"] . "` LIKE '%" . $param . "%'";
+            }
+            $having .= ")";
+        }
+        if (strlen($param) > 5) {
+            // $this->config["last"] = preg_replace("/LIMIT [0-9]+/i", "", $this->config["last"]);
+            //die($this->config["last"]);
+        }
+        $this->config["last"] = $having;
+        // die($having);
+    }
+
+    /**
+     * @param $param
+     */
+    public function ajaxSearch($param = [])
+    {
+        /*print_r($_GET);
+        die();*/
+        $data = [
+            "draw" => 1,
+            "recordsTotal" => 10,
+            "recordsFiltered" => 10,
+            "data" => []
+        ];
+        $this->addParamaterToWhere($param);
+        $this->setData();
+
+        $data["data"] = $this->getAjaxData();
+        $data["recordsFiltered"] = count($data["data"]);
+        return json_encode($data, JSON_PRETTY_PRINT);
     }
 }
