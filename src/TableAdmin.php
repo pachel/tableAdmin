@@ -283,15 +283,17 @@ class TableAdmin
             $sql .= " WHERE " . $this->config["where"];
         }
         if (isset($limit["search"]) && !empty($limit["search"]["value"])) {
-
-            $sql .= " AND (";
-            foreach ($this->config["cols"] as $index => $col) {
-                if ($index > 0) {
-                    $sql .= " OR ";
+            $search = explode(" ",$limit["search"]["value"]);
+            foreach ($search AS $item) {
+                $sql .= " AND (";
+                foreach ($this->config["cols"] as $index => $col) {
+                    if ($index > 0) {
+                        $sql .= " OR ";
+                    }
+                    $sql .= $col["name"] . " LIKE '%" . $item . "%'";
                 }
-                $sql .= $col["name"] . " LIKE '%" . $limit["search"]["value"] . "%'";
+                $sql .= ")";
             }
-            $sql .= ")";
 
         }
         if (isset($this->config["last"])) {
@@ -400,25 +402,63 @@ class TableAdmin
 
     private function checkSearchSessions($search)
     {
-        $live = 20 * 3600;//sec
-        $hash = md5($search);
-        if (isset($_SESSION["search_____"][$hash]) && $_SESSION["search_____"][$hash]["time"] > time() - $live) {
-            return true;
+        $live = 20*3600;//sec
+        $hash = md5(serialize($search).serialize($this->config));
+
+
+        if ((isset($_SESSION["search_____"][$hash]) && $_SESSION["search_____"][$hash]["time"] > (time() - $live))) {
+
+            $_SESSION["recordsFiltered"] = $_SESSION["search_____"][$hash]["ct"];
+
         } else {
             $_SESSION["search_____"][$hash]["time"] = time();
-            return false;
+
+            $this->setQuery(["search" => $search]);
+            $this->data = $this->db->fromDatabase($this->sql_query);
+            $_SESSION["recordsFiltered"] = count($this->data);
+            $_SESSION["search_____"][$hash]["ct"] = $_SESSION["recordsFiltered"];
+
         }
+        /*   print_r($_SESSION);
+           die();*/
     }
 
     private function setData($limit = [], $type = null)
     {
         if (!empty($limit)) {
+            /*
             if ($limit["draw"] == 1) {
                 $this->setQuery();
                 $this->data = $this->db->fromDatabase($this->sql_query, $type);
                 $_SESSION["recordsTotal"] = count($this->data);
                 $_SESSION["recordsFiltered"] = $_SESSION["recordsTotal"];
             }
+            else {
+                if(!$this->checkSearchSessions($limit["search"])){
+
+                }
+                else {
+                    $this->setQuery($limit);
+                }
+            }*/
+            if ($limit["draw"] == 1) {
+                $this->setQuery();
+                $this->data = $this->db->fromDatabase($this->sql_query, $type);
+                $_SESSION["recordsTotal"] = count($this->data);
+                $_SESSION["recordsFiltered"] = $_SESSION["recordsTotal"];
+
+            }
+            else {
+                $this->checkSearchSessions($limit["search"]);
+                $this->setQuery($limit);
+
+                /*
+                $this->setQuery(["search" => $_POST["search"]]);
+                $this->data = $this->db->fromDatabase($this->sql_query, $type);
+                $_SESSION["recordsTotal"] = count($this->data);
+                $_SESSION["recordsFiltered"] = count($this->data);*/
+            }
+
             $this->setQuery($limit);
 
         } else {
@@ -522,7 +562,9 @@ class TableAdmin
             header('Content-Type: application/json;charset=utf-8');
             $data = [
                 "draw" => $_POST["draw"],
+                //"recordsTotal" => $_SESSION["recordsTotal"],
                 "recordsTotal" => $_SESSION["recordsTotal"],
+                //"recordsFiltered" => $_SESSION["recordsFiltered"],
                 "recordsFiltered" => $_SESSION["recordsFiltered"],
                 "data" => $data_array
 
