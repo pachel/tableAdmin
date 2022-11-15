@@ -286,11 +286,16 @@ class TableAdmin
             $search = explode(" ",$limit["search"]["value"]);
             foreach ($search AS $item) {
                 $sql .= " AND (";
+                $ct = 0;
                 foreach ($this->config["cols"] as $index => $col) {
-                    if ($index > 0) {
+                    if ($ct > 0) {
                         $sql .= " OR ";
                     }
-                    $sql .= $col["name"] . " LIKE '%" . $item . "%'";
+
+                    if(!isset($col["visible"]) || $col["visible"]!=false) {
+                        $sql .= $col["name"] . " LIKE '%" . $item . "%'";
+                        $ct++;
+                    }
                 }
                 $sql .= ")";
             }
@@ -374,7 +379,7 @@ class TableAdmin
         }
     }
 
-    public function addButton($name, $text, $action = NULL, $link_target = "_self")
+    public function addButton($name, $text, $action = NULL, $link_target = "_self",$link = null)
     {
 
         if (!empty($action) && gettype($action) == "object") {
@@ -382,7 +387,7 @@ class TableAdmin
             //$this->buttonMethods[$name] = $action;
         }
         if ($name != "delete" && $name != "edit" && $name != "add") {
-            $this->buttons[] = ["name" => $name, "text" => $text, "target" => $link_target];
+            $this->buttons[] = ["name" => $name, "text" => $text, "target" => $link_target,"link"=>$link];
             $this->custom_buttons++;
         }
     }
@@ -464,6 +469,7 @@ class TableAdmin
         } else {
             $this->setQuery();
         }
+
         $this->data = $this->db->fromDatabase($this->sql_query, $type);
     }
 
@@ -531,6 +537,7 @@ class TableAdmin
         $this->checkFormConfig();
         $this->runActions();
 
+
         if (isset($_POST["draw"])) {
             $limit = [
                 "start" => $_POST["start"],
@@ -541,13 +548,17 @@ class TableAdmin
             ];
             $this->setData($limit);
             $data_array = [];
+
             if(!empty($this->data)){
                 foreach ($this->data AS &$row){
                     $buttons = $this->generateButtons($row);
 
                     $row2 = [];
-                    foreach ($row AS $value){
-                        $row2[] = $value;
+                    foreach ($row AS $index => $value){
+                        if(!isset($this->config["cols"][$index]["visible"]) || !$this->config["cols"][$index]["visible"]) {
+                            //print_r($this->config["cols"][$index]["visible"]);
+                            $row2[] = $value;
+                        }
                     }
                     if(empty($buttons)){
                         //unset($row["tb___buttons"]);
@@ -580,14 +591,19 @@ class TableAdmin
         $html = "";
         if ((isset($this->config["form"]) && !empty($this->config["form"])) || $this->custom_buttons > 0):
             $html = "<td>";
-            if ((isset($this->config["form"]) && !empty($this->config["form"])) && $this->runMethods("delete", $row)):
+            if (((isset($this->config["form"]) && !empty($this->config["form"])) || (isset($this->config["deleteButton"]) && $this->config["deleteButton"])) && $this->runMethods("delete", $row)):
                 $html .= "[<a href=\"" . $this->config["url"] . "?ta_method=delete&key=" . $this->key . "&id=" . $row[$this->config["id"]] . "\" onclick=\"return confirm('Biztos hogy törli?')\">Töröl</a>]";
             endif;
             if ((isset($this->config["form"]) && !empty($this->config["form"])) && $this->runMethods("edit", $row)):
                 $html .= "[<a href=\"" . $this->config["url"] . "?ta_method=edit&key=" . $this->key . "&id=" . $row[$this->config["id"]] . "\">Szerkeszt</a>]";
             endif;
             foreach ($this->buttons as $button):if ($this->runMethods($button["name"], $row)):
-                $html .= "[<a href=\"" . $this->config["url"] . "?ta_method=" . $button["name"] . "&key=" . $this->key . "&id=" . $row[$this->config["id"]] . "\" target=\"" . $button["target"] . "\">" . $button["text"] . "</a>]";
+                if(!empty($button["link"])){
+                    $html .= "[<a href=\"" . $button["link"]. "\" target=\"" . $button["target"] . "\">" . $button["text"] . "</a>]";
+                }
+                else {
+                    $html .= "[<a href=\"" . $this->config["url"] . "?ta_method=" . $button["name"] . "&key=" . $this->key . "&id=" . $row[$this->config["id"]] . "\" target=\"" . $button["target"] . "\">" . $button["text"] . "</a>]";
+                }
             endif;endforeach;
             $html .= "</td>";
         endif;
