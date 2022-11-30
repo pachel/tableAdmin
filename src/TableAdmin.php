@@ -275,7 +275,12 @@ class TableAdmin
         $sql .= ",'' tb___buttons FROM ";
         foreach ($this->config["tables"] as $index => $table) {
             if ($index > 0) {
-                $sql .= ",";
+                if(preg_match("/ /",$table)){
+
+                }
+                else {
+                    $sql .= ",";
+                }
             }
             $sql .= " " . $table;
         }
@@ -312,8 +317,6 @@ class TableAdmin
             $sql .= " LIMIT " . $limit["start"] . "," . $limit["length"];
             //  die($sql);
         }
-
-
         $this->sql_query = $sql;
     }
 
@@ -520,6 +523,7 @@ class TableAdmin
 
         if (!isset($_GET["ta_method"])) {
             $this->setData();
+
             require __DIR__ . "/../tpls/generateTable.php";
             require __DIR__ . "/../tpls/datatable.js.php";
 
