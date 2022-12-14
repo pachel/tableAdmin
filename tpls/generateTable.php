@@ -1,5 +1,5 @@
 <?php if(isset($this->config["addButton"]) && $this->config["addButton"]):?>
-    <a href="<?=$this->config["url"]."?ta_method=add&key=".$this->key?>">Új sor hozzáadása</a>
+    <a href="<?=$this->config["url"].(preg_match("/\?/",$this->config["url"])?"&":"?")."ta_method=add&key=".$this->key?>">Új sor hozzáadása</a>
 <?php endif;?>
 
 <table id="datatables" class="table table-bordered table-striped display">
