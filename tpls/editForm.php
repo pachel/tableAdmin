@@ -14,7 +14,7 @@ echo $this->getError();
                 <input type="hidden" id="ta_form_<?= $col["name"] ?>" name="<?= $col["name"] ?>" value="<?= (isset($col["value"]) ? $col["value"] : (isset($result[$col["name"]]) ? $result[$col["name"]] : "")) ?>">
             <?php else : ?>
                 <div class="col<?= (isset($col["bt_num"]) ? "-" . $col["bt_num"] : "") ?>">
-                    <div class="form-group">
+                    <div class="form-group mb-3">
                         <label><?= $col["text"] ?></label>
                         <?php if ($col["type"] == "textarea"): ?>
                             <textarea class="form-control" id="ta_form_<?= $col["name"] ?>" placeholder="<?= $col["text"] ?>" name="<?= $col["name"] ?>"<?= (isset($col["required"]) && $col["required"]) ? " required=\"true\"" : "" ?>><?= (isset($col["value"]) ? $col["value"] : (isset($result[$col["name"]]) ? $result[$col["name"]] : "")) ?></textarea>
