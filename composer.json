@@ -2,7 +2,6 @@
     "name": "pachel/tableadmin",
     "description": "Table content editor",
     "require": {
-        "pachel/dbclass": "dev-master",
         "components/jquery": "^3.5",
         "twbs/bootstrap": "^4.5"
     },
