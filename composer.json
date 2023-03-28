@@ -2,8 +2,7 @@
     "name": "pachel/tableadmin",
     "description": "Table content editor",
     "require": {
-        "components/jquery": "^3.5",
-        "twbs/bootstrap": "^4.5"
+
     },
     "autoload": {      
         "classmap": ["src/"],
