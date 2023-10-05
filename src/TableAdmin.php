@@ -636,12 +636,12 @@ class TableAdmin
     {
         $html = "";
         if ((isset($this->config["form"]) && !empty($this->config["form"])) || $this->custom_buttons > 0):
-            $html = "<td>";
+            $html = "<td class=\"ta-buttons\">";
             if (((isset($this->config["form"]) && !empty($this->config["form"])) || (isset($this->config["deleteButton"]) && $this->config["deleteButton"])) && $this->runMethods("delete", $row)):
-                $html .= "[<a href=\"" . $this->config["url"] .(preg_match("/\?/",$this->config["url"])?"&":"?")."ta_method=delete&key=" . $this->key . "&id=" . $row[$this->config["id"]] . "\" onclick=\"return confirm('Biztos hogy törli?')\">Töröl</a>]";
+                $html .= "[<a href=\"" . $this->config["url"] .(preg_match("/\?/",$this->config["url"])?"&":"?")."ta_method=delete&key=" . $this->key . "&id=" . $row[$this->config["id"]] . "\" onclick=\"return confirm('Biztos hogy törli?')\" class=\"ta-button-delete\">Töröl</a>]";
             endif;
             if ((isset($this->config["form"]) && !empty($this->config["form"])) && $this->runMethods("edit", $row)):
-                $html .= "[<a href=\"" . $this->config["url"] .(preg_match("/\?/",$this->config["url"])?"&":"?"). "ta_method=edit&key=" . $this->key . "&id=" . $row[$this->config["id"]] . "\">Szerkeszt</a>]";
+                $html .= "[<a href=\"" . $this->config["url"] .(preg_match("/\?/",$this->config["url"])?"&":"?"). "ta_method=edit&key=" . $this->key . "&id=" . $row[$this->config["id"]] . "\" class=\"ta-button-edit\">Szerkeszt</a>]";
             endif;
             foreach ($this->buttons as $button):if ($this->runMethods($button["name"], $row)):
                 if(!empty($button["link"])){
