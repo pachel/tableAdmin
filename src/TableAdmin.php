@@ -675,4 +675,15 @@ class TableAdmin
         $data["recordsFiltered"] = count($data["data"]);
         return json_encode($data, JSON_PRETTY_PRINT);
     }
+    private function setError($text){
+        $this->errorText = $text;
+    }
+    private function getError(){
+        $html = $this->errorText;
+        if(empty($this->errorText)){
+            return  "";
+        }
+
+        return $html;
+    }
 }
