@@ -64,6 +64,7 @@ class TableAdmin
      */
     private $buttonActionMethods = ["delete" => []];
 
+    private $beforMethods = [];
     /**
      *  Extra gombok,
      * @var array
@@ -184,6 +185,10 @@ class TableAdmin
 
     public function addBeforeActionMehod($button, $method)
     {
+        if (gettype($method) != "object") {
+            return;
+        }
+        $this->beforMethods[$button] = $method;
 
     }
 
@@ -209,7 +214,12 @@ class TableAdmin
                 $data[$name] = $_POST[$name];
             }
         }
-
+        foreach ($this->beforMethods AS $button => $method){
+            if($_GET["ta_method"] == $button){
+                $this->buttonActionMethods[$button]($_GET["id"]);
+                break;
+            }
+        }
         if ($_GET["ta_method"] == "edit") {
             $this->db->update($this->config["formTable"], $data, [$this->config["id"] => $_GET["id"]]);
             if (isset($this->buttonActionMethods["edit"]) && gettype($this->buttonActionMethods["edit"]) == "object") {
