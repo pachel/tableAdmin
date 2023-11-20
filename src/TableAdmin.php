@@ -216,7 +216,7 @@ class TableAdmin
         }
         foreach ($this->beforMethods AS $button => $method){
             if($_GET["ta_method"] == $button){
-                $this->buttonActionMethods[$button]($_GET["id"]);
+                $this->beforMethods[$button]($_GET["id"]);
                 break;
             }
         }
