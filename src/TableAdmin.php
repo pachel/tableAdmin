@@ -221,7 +221,7 @@ class TableAdmin
             }
         }
         if ($_GET["ta_method"] == "edit") {
-            $this->db->update($this->config["formTable"], $data, [$this->config["id"] => $_GET["id"]]);
+            $this->db->update($this->config["formTable"], $data, [$this->config["formId"] => $_GET["id"]]);
             if (isset($this->buttonActionMethods["edit"]) && gettype($this->buttonActionMethods["edit"]) == "object") {
                 $this->buttonActionMethods["edit"]($_GET["id"]);
             }
