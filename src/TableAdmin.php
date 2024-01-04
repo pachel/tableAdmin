@@ -34,6 +34,7 @@ class TableAdmin
      * @var type
      */
     private $db;
+    private $strings = [];
     private static $self;
     private $cols = [];
     private $data = [];
@@ -124,8 +125,15 @@ class TableAdmin
             }
         }
         foreach ($this->config["cols"] as &$col) {
+
             if (!isset($col["alias"])) {
                 $col["alias"] = $col["name"];
+            }
+            /**
+             * Csekkoljuk a string opciót
+             */
+            if(isset($col["string"])){
+                $this->strings[$col["alias"]] = $col["string"];
             }
         }
         if (isset($this->config["keycheck"]) && !$this->config["keycheck"]) {
@@ -478,8 +486,31 @@ class TableAdmin
         } else {
             $this->setQuery();
         }
-
         $this->data = $this->db->fromDatabase($this->sql_query, $type);
+        $this->setStringData();
+    }
+
+    /**
+     * Ha a configban van beállítva string opció
+     * akkor itt kicseréljük a szövegeket
+     * @return void
+     */
+    private function setStringData(){
+        if(empty($this->strings)){
+            return;
+        }
+        foreach ($this->data AS &$row){
+            foreach ($row AS $index => &$col) {
+                if (!isset($this->strings[$index])) {
+                    continue;
+                }
+                /**
+                 * template karakter ##|%%
+                 * Kicseréljük amire kell
+                 */
+                $col = str_replace(["##", "%%"], $col, $this->strings[$index]);
+            }
+        }
     }
 
     private function getFormElements()

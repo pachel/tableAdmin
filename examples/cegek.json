@@ -47,8 +47,15 @@
             "visible": false
         },
         {
+            "name": "id",
+            "alias": "link",
+            "string": "link: <a href=\"##\">##</a>",
+            "text": "Link",
+            "visible": true
+        },
+        {
             "name": "nev",
-            "text": "Név",            
+            "text": "Név",
             "visible": true
         },
         {
