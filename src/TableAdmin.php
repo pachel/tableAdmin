@@ -624,6 +624,14 @@ class TableAdmin
             die();
         }
     }
+    private function linkCsere($link,$row){
+        $c = [];
+        foreach ($row AS $index => $value){
+            $c[0][] = "%".$index;
+            $c[1][] = $value;
+        }
+        return str_replace($c[0],$c[1],$link);
+    }
 
     private function generateButtons($row)
     {
@@ -640,6 +648,8 @@ class TableAdmin
                 if (empty($button["link"])) {
                     $button["link"] = $this->config["url"] . "?ta_method=" . $button["name"] . "&key=" . $this->key . "&id=" . $row[$this->config["id"]];
                 }
+                $button["link"] = $this->linkCsere($button["link"],$row);
+                $button["onclick"] = $this->linkCsere($button["onclick"],$row);
                 $html .= "[<a href=\"" . $button["link"] . "\" target=\"" . $button["target"] . "\"".(!empty($button["onclick"])?" onclick=\"".$button["onclick"]."\"":"").">" . $button["text"] . "</a>]";
 
             endif;endforeach;
