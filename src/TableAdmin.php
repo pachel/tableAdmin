@@ -106,7 +106,9 @@ class TableAdmin
         }
         return self::$self;
     }
-
+    private function setBaseUrl(){
+        $this->config["url_full"] = $_SERVER["REQUEST_SCHEME"]."://".$_SERVER["SERVER_NAME"].$_SERVER["REDIRECT_URL"];
+    }
     /**
      *
      * @param type $config
@@ -124,6 +126,7 @@ class TableAdmin
                 throw new \Exception(error(1));
             }
         }
+        $this->setBaseUrl();
         foreach ($this->config["cols"] as &$col) {
 
             if (!isset($col["alias"])) {
@@ -153,7 +156,12 @@ class TableAdmin
             } elseif ($_GET["ta_method"] == "add") {
                 if ($_GET["key"] == $this->key || !$this->keyCheck) {
                     $this->saveForm();
-                    header("location:" . $this->config["baseUrl"] . $this->config["url"]);
+                    if(isset($this->config["url_full"]) && !empty($this->config["url_full"])){
+                        header("location:" . $this->config["url_full"]);
+                    }
+                    else {
+                        header("location:" . $this->config["baseUrl"] . $this->config["url"]);
+                    }
                     exit();
                 } else {
                     throw new \Exception(error(2));
@@ -173,7 +181,12 @@ class TableAdmin
                 } else {
                     $this->db->delete($this->config["formTable"], [$this->config["id"] => $_GET["id"]]);
                 }
-                header("location:" . $this->config["baseUrl"] . $this->config["url"]);
+                if(isset($this->config["url_full"]) && !empty($this->config["url_full"])){
+                    header("location:" . $this->config["url_full"]);
+                }
+                else {
+                    header("location:" . $this->config["baseUrl"] . $this->config["url"]);
+                }
                 exit();
             } else {
                 throw new \Exception(error(3));
@@ -186,7 +199,12 @@ class TableAdmin
                 }
             }
             //die($this->buttonMethods[$_GET["ta_method"]]);
-            header("location:" . $this->config["baseUrl"] . $this->config["url"]);
+            if(isset($this->config["url_full"]) && !empty($this->config["url_full"])){
+                header("location:" . $this->config["url_full"]);
+            }
+            else {
+                header("location:" . $this->config["baseUrl"] . $this->config["url"]);
+            }
             exit();
         }
     }
