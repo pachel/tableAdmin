@@ -8,6 +8,7 @@
 namespace pachel;
 
 session_start();
+ob_start();
 error_reporting(E_ALL);
 ini_set("display_errors", true);
 ?>
@@ -32,7 +33,7 @@ ini_set("display_errors", true);
             $db = new \Pachel\dbClass([
                 "prename" => "",
                 "server" => "localhost",
-                "dbname" => "persons",
+                "dbname" => "persons_240802",
                 "username" => "persons2",
                 "password" => "Jsx_Juz_cv.7867"
             ]);
@@ -46,6 +47,7 @@ ini_set("display_errors", true);
                     return "nemfizetve";
                 }
             });
+            //$tdadmin->checkAjaxRequest();
             $tdadmin->show();
             ?>
         </div>

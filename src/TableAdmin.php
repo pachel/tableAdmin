@@ -34,6 +34,10 @@ class TableAdmin
      * @var type
      */
     private $db;
+    /**
+     * @var array $_variables
+     */
+    private $_variables;
     private $strings = [];
     private static $self;
     private $cols = [];
@@ -106,8 +110,30 @@ class TableAdmin
         }
         return self::$self;
     }
-    private function setBaseUrl(){
-        $this->config["url_full"] = $_SERVER["REQUEST_SCHEME"]."://".$_SERVER["SERVER_NAME"].$_SERVER["REDIRECT_URL"];
+
+    private function setBaseUrl()
+    {
+        $this->config["url_full"] = $_SERVER["REQUEST_SCHEME"] . "://" . $_SERVER["SERVER_NAME"] . $_SERVER["REDIRECT_URL"];
+    }
+
+    public function addVariable($name, $value)
+    {
+        $this->_variables[$name] = $value;
+    }
+
+    private function replaceVariable($string)
+    {
+
+        if(!is_array($this->_variables) || empty($this->_variables)){
+            return $string;
+        }
+
+        foreach ($this->_variables AS $varname => $value){
+            $search[] = "{{".$varname."}}";
+            $replace[] = $value;
+        }
+        $string = str_replace($search,$replace,$string);
+        return $string;
     }
     /**
      *
@@ -135,7 +161,7 @@ class TableAdmin
             /**
              * Csekkoljuk a string opciót
              */
-            if(isset($col["string"])){
+            if (isset($col["string"])) {
                 $this->strings[$col["alias"]] = $col["string"];
             }
         }
@@ -156,10 +182,9 @@ class TableAdmin
             } elseif ($_GET["ta_method"] == "add") {
                 if ($_GET["key"] == $this->key || !$this->keyCheck) {
                     $this->saveForm();
-                    if(isset($this->config["url_full"]) && !empty($this->config["url_full"])){
+                    if (isset($this->config["url_full"]) && !empty($this->config["url_full"])) {
                         header("location:" . $this->config["url_full"]);
-                    }
-                    else {
+                    } else {
                         header("location:" . $this->config["baseUrl"] . $this->config["url"]);
                     }
                     exit();
@@ -181,10 +206,9 @@ class TableAdmin
                 } else {
                     $this->db->delete($this->config["formTable"], [$this->config["id"] => $_GET["id"]]);
                 }
-                if(isset($this->config["url_full"]) && !empty($this->config["url_full"])){
+                if (isset($this->config["url_full"]) && !empty($this->config["url_full"])) {
                     header("location:" . $this->config["url_full"]);
-                }
-                else {
+                } else {
                     header("location:" . $this->config["baseUrl"] . $this->config["url"]);
                 }
                 exit();
@@ -199,10 +223,9 @@ class TableAdmin
                 }
             }
             //die($this->buttonMethods[$_GET["ta_method"]]);
-            if(isset($this->config["url_full"]) && !empty($this->config["url_full"])){
+            if (isset($this->config["url_full"]) && !empty($this->config["url_full"])) {
                 header("location:" . $this->config["url_full"]);
-            }
-            else {
+            } else {
                 header("location:" . $this->config["baseUrl"] . $this->config["url"]);
             }
             exit();
@@ -240,14 +263,14 @@ class TableAdmin
                 $data[$name] = $_POST[$name];
             }
         }
-        foreach ($this->beforMethods AS $button => $method){
-            if($_GET["ta_method"] == $button){
+        foreach ($this->beforMethods as $button => $method) {
+            if ($_GET["ta_method"] == $button) {
                 $this->beforMethods[$button]($_GET["id"]);
                 break;
             }
         }
         if ($_GET["ta_method"] == "edit") {
-            $this->db->update($this->config["formTable"], $data, [(isset($this->config["formId"])?$this->config["formId"]:$this->config["id"]) => $_GET["id"]]);
+            $this->db->update($this->config["formTable"], $data, [(isset($this->config["formId"]) ? $this->config["formId"] : $this->config["id"]) => $_GET["id"]]);
             if (isset($this->buttonActionMethods["edit"]) && gettype($this->buttonActionMethods["edit"]) == "object") {
                 $this->buttonActionMethods["edit"]($_GET["id"]);
             }
@@ -351,6 +374,7 @@ class TableAdmin
 
 
         $this->sql_query = $sql;
+
     }
 
     /**
@@ -409,6 +433,7 @@ class TableAdmin
         if (!empty($this->onlyFormCols)) {
             foreach ($this->onlyFormCols as &$col) {
                 if (isset($col["sqlData"]) && !empty($col["sqlData"])) {
+                    $col["sqlData"] = $this->replaceVariable($col["sqlData"]);
                     $col["data"] = $this->db->fromDatabase($col["sqlData"]);
                 }
             }
@@ -513,12 +538,13 @@ class TableAdmin
      * akkor itt kicseréljük a szövegeket
      * @return void
      */
-    private function setStringData(){
-        if(empty($this->strings)){
+    private function setStringData()
+    {
+        if (empty($this->strings)) {
             return;
         }
-        foreach ($this->data AS &$row){
-            foreach ($row AS $index => &$col) {
+        foreach ($this->data as &$row) {
+            foreach ($row as $index => &$col) {
                 if (!isset($this->strings[$index])) {
                     continue;
                 }
@@ -559,6 +585,7 @@ class TableAdmin
 
         $sql .= " FROM " . $this->config["formTable"];
         $sql .= " WHERE " . $this->config["id"] . "=" . $_GET["id"];
+        $sql = $this->replaceVariable($sql);
         return $sql;
     }
 
@@ -642,13 +669,15 @@ class TableAdmin
             die();
         }
     }
-    private function linkCsere($link,$row){
+
+    private function linkCsere($link, $row)
+    {
         $c = [];
-        foreach ($row AS $index => $value){
-            $c[0][] = "%".$index;
+        foreach ($row as $index => $value) {
+            $c[0][] = "%" . $index;
             $c[1][] = $value;
         }
-        return str_replace($c[0],$c[1],$link);
+        return str_replace($c[0], $c[1], $link);
     }
 
     private function generateButtons($row)
@@ -666,9 +695,9 @@ class TableAdmin
                 if (empty($button["link"])) {
                     $button["link"] = $this->config["url"] . "?ta_method=" . $button["name"] . "&key=" . $this->key . "&id=" . $row[$this->config["id"]];
                 }
-                $button["link"] = $this->linkCsere($button["link"],$row);
-                $button["onclick"] = $this->linkCsere($button["onclick"],$row);
-                $html .= "[<a href=\"" . $button["link"] . "\" target=\"" . $button["target"] . "\"".(!empty($button["onclick"])?" onclick=\"".$button["onclick"]."\"":"").">" . $button["text"] . "</a>]";
+                $button["link"] = $this->linkCsere($button["link"], $row);
+                $button["onclick"] = $this->linkCsere($button["onclick"], $row);
+                $html .= "[<a href=\"" . $button["link"] . "\" target=\"" . $button["target"] . "\"" . (!empty($button["onclick"]) ? " onclick=\"" . $button["onclick"] . "\"" : "") . ">" . $button["text"] . "</a>]";
 
             endif;endforeach;
             $html .= "</td>";
@@ -744,13 +773,17 @@ class TableAdmin
         $data["recordsFiltered"] = count($data["data"]);
         return json_encode($data, JSON_PRETTY_PRINT);
     }
-    private function setError($text){
+
+    private function setError($text)
+    {
         $this->errorText = $text;
     }
-    private function getError(){
+
+    private function getError()
+    {
         $html = $this->errorText;
-        if(empty($this->errorText)){
-            return  "";
+        if (empty($this->errorText)) {
+            return "";
         }
 
         return $html;

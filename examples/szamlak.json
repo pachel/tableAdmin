@@ -1,39 +1,94 @@
 {
     "baseUrl" : "",    
     "url" : "szamlak.php",
-    "ajaxUrl" : "Penzugy/ajax",   
-    "tables" : ["p_szamlak AS sz","p_egyedek AS e"],
-    "where" : "sz.id_egyedek=e.id AND ( sz.statusz=1 OR sz.statusz=2)",
-    "last" : "ORDER BY sz.hatarido DESC",
-    "id" : "id",
-    "addButton" : true,
+    "ajaxUrl" : "Penzugy/ajax",
+    "tables": ["p_szamlak AS sz"],
+    "keycheck": false,
+    "last": "ORDER BY sz.hatarido DESC",
+    "id": "id",
+    "addButton": true,
     "cols": [
         {
-            "name": "sz.id",
+            "name": "id",
             "text": "ID",
             "alias": "id",
+            "visible": true
+        },
+        {
+            "name": "id_szamlak",
+            "text": "ID",
+            "alias": "id_szamlak",
             "visible": false
         },
-        
+        {
+            "name": "(SELECT COUNT(*) FROM p_szamlak sz2 WHERE sz2.sorszam=sz.sorszam AND sz2.id_cegek=sz.id_tulaj AND sz2.id_tulaj=sz.id_cegek AND sz2.statusz>0 AND sz2.kibe='B' AND sz2.osszeg_netto IS NOT NULL)",
+            "text": "ID",
+            "alias": "ellenszamla",
+            "visible": false
+        },
+        {
+            "name": "id_fizetes_tipusok",
+            "text": "ID",
+            "visible": false
+        },
+        {
+            "name": "id_cegek",
+            "text": "ID",
+            "visible": false
+        },
+        {
+            "name": "statusz",
+            "text": "ID",
+            "alias": "statusz",
+            "visible": false
+        },
+        {
+            "name": "beerkezes",
+            "text": "ID",
+            "visible": false
+        },
+        {
+            "name": "DATE_FORMAT(beerkezes,'%u')",
+            "alias": "b_het",
+            "text": "ID",
+            "visible": false
+        },
+        {
+            "name": "DATE_FORMAT(NOW(),'%u')",
+            "alias": "a_het",
+            "visible": false
+        },
+        {
+            "name": "(SELECT COUNT(*) FROM p_szamlafajlok szf,fajlok f WHERE szf.id_szamlak=sz.id AND f.id=szf.id_fajlok)",
+            "text": "Fájlok",
+            "alias": "fajlok",
+            "visible": false
+        },
+        {
+            "name": "kiallitas",
+            "text": "Kelt",
+            "alias": "kiallitas",
+            "visible": false
+        },
         {
             "name": "sorszam",
             "text": "Sorszám"
         },
         {
-            "name" : "@kibe:=IF(e.id_vevo=e.id_tulaj,'B','K')",
-            "alias" : "kibe",
-            "text" : "TIPUS",                        
-            "visible" : false
+            "name": "(SELECT fm.kod FROM p_fizetes_tipusok fm WHERE fm.id=sz.id_fizetes_tipusok)",
+            "alias" : "fizetes",
+            "text": "F",
+            "visible": true
         },
         {
-            "name": "IF(@kibe='B','Bejövő','Kimenő')",
-            "alias" : "asd",
-            "text": "Tipus",
-            "visible" : false
+            "name": "kibe",
+            "text": "T",
+            "visible": true
         },
+
         {
-            "name": "IF(@kibe='B',(SELECT c.nev FROM p_cegek c WHERE c.id=e.id_szallito),(SELECT c.nev FROM p_cegek c WHERE c.id=e.id_vevo))",            
-            "alias" : "partner",
+            "name": "(SELECT c.nev FROM p_cegek c WHERE c.id=sz.id_cegek)",
+            "alias": "partner",
             "text": "Partner"
         },
         {
@@ -41,47 +96,52 @@
             "text": "Teljesítés dátuma"
         },
         {
-            "name" : "FORMAT(osszeg_netto*IF(@kibe='B',-1,1),2)",
-            "alias" : "netto",
-            "text" : "Nettó"
+            "name": "hatarido",
+            "text": "Határidő"
         },
         {
-            "name" : "FORMAT(osszeg_brutto*IF(@kibe='B',-1,1),2)",
-            "alias" : "brutto",
-            "text" : "Bruttó"
+            "name": "FORMAT(osszeg_netto,2)",
+            "alias": "netto",
+            "text": "Nettó"
         },
         {
-            "name" : "(SELECT d.nev FROM p_devizak d WHERE d.id=sz.id_deviza)",
-            "alias" : "deviza",
-            "text" : "Deviza"
+            "name": "FORMAT(osszeg_brutto,2)",
+            "alias": "brutto",
+            "text": "Bruttó"
         },
         {
-            "name" : "@fizetve:=(SELECT SUM(pm.osszeg) FROM p_penzmozgasok pm WHERE pm.id_szamlak=sz.id)",
-            "alias" :"fizetve",
-            "text" : "Fizetve",
-            "visible" : false
+            "name": "(SELECT d.nev FROM p_devizak d WHERE d.id=sz.id_deviza)",
+            "alias": "deviza",
+            "text": "Deviza"
         },
         {
-            "name" : "@fizetve:=IF(@fizetve IS NULL,0,@fizetve)",
-            "alias" :"fizetve2",
-            "text" : "Fizetve",
-            "visible" : false
+            "name": "@fizetve:=(SELECT SUM(pm.osszeg) FROM p_penzmozgasok pm WHERE pm.id_szamlak=sz.id)",
+            "alias": "fizetve",
+            "text": "Fizetve",
+            "visible": false
         },
         {
-            "name" : "FORMAT(@fizetve,2)",
-            "alias" :"fizetve_text",
-            "text" : "Fizetve"            
+            "name": "@fizetve:=IF(@fizetve IS NULL,0,@fizetve)",
+            "alias": "fizetve2",
+            "text": "Fizetve",
+            "visible": false
         },
         {
-            "name" : "FORMAT(@fizetve-sz.osszeg_brutto,2)",
-            "alias" :"egyenleg",
-            "text" : "Egyenleg"            
+            "name": "FORMAT(@fizetve,2)",
+            "alias": "fizetve_text",
+            "text": "Fizetve"
+        },
+        {
+            "name": "@egyenleg := FORMAT(sz.osszeg_brutto-@fizetve,2)",
+            "alias": "egyenleg",
+            "text": "Egyenleg"
         }
-        
+
     ],
-    "formTable" : "p_szamlak",    
+    "formTable": "p_szamlak",
     "form": [
         [
+
             {
                 "name": "sorszam",
                 "text": "Sorszám",
@@ -90,37 +150,52 @@
                 "bt_num": 2
             },
             {
+                "name": "kibe",
+                "text": "Ki/Be",
+                "type": "select",
+                "bt_num": 2,
+                "data" : [
+                    {
+                        "value" : "K",
+                        "text" : "Kimenő számla"
+                    },
+                    {
+                        "value" : "B",
+                        "text" : "Bejövő számla"
+                    }
+                ]
+            },
+            {
                 "name": "osszeg_netto",
                 "text": "Nettó összeg",
-                "type": "text",                
-                "bt_num": 4
+                "type": "text",
+                "bt_num": 3
             },
             {
                 "name": "osszeg_brutto",
                 "text": "Bruttó összeg",
-                "type": "text",                
-                "bt_num": 4
+                "type": "text",
+                "bt_num": 3
             },
             {
                 "name": "id_deviza",
                 "text": "Deviza",
                 "type": "select",
                 "data": [{
-                        "text": "HUF",
-                        "value": 2
-                    }],
-                "sqlData": "SELECT id AS value,nev AS text,IF(nev='HUF',1,0) AS `default` FROM p_devizak",
+                    "text": "HUF",
+                    "value": 2
+                }],
+                "sqlData": "SELECT id AS value,nev AS text FROM p_devizak",
                 "bt_num": 2
             }
         ],
         [
             {
-                "name": "id_partner",
+                "name": "id_cegek",
                 "text": "Partner",
                 "type": "select",
-                "bt_num" : 4, 
-                
-                "noSave" : true
+                "bt_num" : 4,
+                "sqlData" : "SELECT id AS value,nev AS text FROM p_cegek ORDER BY nev"
             },
             {
                 "name": "statusz",
@@ -133,13 +208,17 @@
                         "value": 0
                     },
                     {
-                        "text": "Aktív",
+                        "text": "Befogadott",
                         "value": 1,
                         "default": true
                     },
                     {
-                        "text": "Véglegesített",
+                        "text": "Fizethető",
                         "value": 2
+                    },
+                    {
+                        "text": "Kiegyenlített",
+                        "value": 3
                     }
                 ]
             },
@@ -147,25 +226,30 @@
                 "name": "id_szamla_tipusok",
                 "text": "Tipus",
                 "type": "select",
-                "bt_num" : 2, 
-                "sqlData" : "SELECT id AS value,nev AS text FROM p_szamla_tipusok ORDER BY nev"
+                "bt_num" : 2,
+                "sqlData" : "SELECT id AS value,nev AS text FROM p_szamla_tipusok WHERE statusz=1 ORDER BY nev"
             },
             {
                 "name": "id_koltseg_tipusok",
                 "text": "PROF.CENT",
                 "type": "select",
-                "bt_num" : 2, 
-                "sqlData" : "SELECT id AS value,nev AS text FROM p_koltseg_tipusok ORDER BY nev"
+                "bt_num" : 2,
+                "sqlData" : "SELECT id AS value,nev AS text FROM p_koltseg_tipusok WHERE statusz=1 ORDER BY nev"
             },
             {
                 "name": "id_fizetes_tipusok",
                 "text": "FIZ.MOD",
                 "type": "select",
-                "bt_num" : 2, 
-                "sqlData" : "SELECT id AS value,nev AS text FROM p_fizetes_tipusok ORDER BY nev"
+                "bt_num" : 2,
+                "sqlData" : "SELECT id AS value,nev AS text FROM p_fizetes_tipusok  WHERE statusz=1 ORDER BY nev"
             }
         ],
         [
+            {
+                "name" : "kiallitas",
+                "text" : "Kelt",
+                "type" : "date"
+            },
             {
                 "name" : "teljesites",
                 "text" : "Teljesítés",
@@ -180,14 +264,68 @@
                 "name" : "hatarido",
                 "text" : "Határidő",
                 "type" : "date"
+            },
+            {
+                "name" : "verk_id",
+                "text" : "VERK ID",
+                "type" : "text"
+            },
+            {
+                "name": "id_szamlak",
+                "text": "Számla (részletfizetéshez)",
+                "type": "select2",
+                "sqlData": "SELECT sz.id AS value,CONCAT(sorszam,' - ',c.nev) AS text FROM p_szamlak sz,p_cegek c WHERE c.id=sz.id_cegek AND sz.id_szamlak=0 AND sz.statusz=1",
+                "bt_num": 3
+            }
+        ],
+        [
+            {
+                "name": "penztaros",
+                "text": "Pénztáros (KP)",
+                "type": "text"
+            },
+            {
+                "name": "kartya_tulaj",
+                "text": "Kártya tulaj/KP felvevő",
+                "type": "text"
+            },
+            {
+                "name": "tev",
+                "text": "TEV",
+                "type": "text"
             }
         ],
         [
             {
                 "name": "megjegyzes",
                 "text": "Megjegyzés",
-                "type": "textarea"                
+                "type": "textarea"
             }
         ]
-    ]
+    ],
+    "datatables" : {
+        "pageLength": 25,
+        "dom" : "Bfrtip",
+        "buttons": [
+            {
+                "extend": "pdf",
+                "text": "<i class=\"fas fa-file-pdf\"></i> PDF letöltése",
+                "autoFilter": true,
+                "sheetName": "PDF export",
+                "orientation": "landscape",
+                "exportOptions": {
+                    "columns": [ 0, 1,3,4,5,6,7,8,9,10 ]
+                }
+            },
+            {
+                "extend": "excel",
+                "text": "<i class=\"fas fa-file-excel\"></i> XLS letöltése",
+                "autoFilter": true,
+                "sheetName": "XLS export",
+                "exportOptions": {
+                    "columns": [ 0, 1,3,4,5,6,7,8,9,10 ]
+                }
+            }
+        ],
+        "order" : []    }
 }
