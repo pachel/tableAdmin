@@ -1,264 +1,791 @@
 <?php
 
-use TDF\Models\AjanlatLog;
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 
-class Ajanlatok extends BaseClass
+/**
+ * Description of TableAdmin
+ *
+ * @author Tóth Láaszló
+ */
+
+namespace pachel;
+
+class TableAdmin
 {
 
     /**
-     * @var AjanlatLog $Log
+     *  Ide lesznek betöltve a konfig adatok
+     * @var type
      */
-    private $Log;
+    private $config = [];
+
     /**
-     * @var \TDF\Models\ajanlatModel $ajanlat
+     * Legenerált SQL QUERY a konfigból
+     * @var type
      */
-    private $ajanlat;
-    public function __construct($app)
+    private $sql_query = "";
+
+    /**
+     * pachel/dbClass object
+     * @var type
+     */
+    private $db;
+    /**
+     * @var array $_variables
+     */
+    private $_variables;
+    private $strings = [];
+    private static $self;
+    private $cols = [];
+    private $data = [];
+    private $key = "";
+    private $keyfile = "";
+
+    private $keyCheck = true;
+
+    private $custom_buttons = 0;
+    /**
+     * pointers to form config
+     * @var array
+     */
+    private $onlyFormCols = [];
+    private $onlyCols = [];
+
+    /**
+     *
+     *  A gombokhoz tartozó függvények, csak akkor jelennek meg a gombok, ha a függvény visszatérési értéke igaz
+     * @var array
+     */
+    private $methods = ["delete" => [], "edit" => []];
+
+    /**
+     *  Függvénylista a gombokhoz
+     *  A gomb linkjének meghívásakor fut(nak) le
+     * @var array
+     */
+    private $buttonActionMethods = ["delete" => []];
+
+    private $beforMethods = [];
+    /**
+     *  Extra gombok,
+     * @var array
+     */
+    private $buttons = []; /* ["name"=>"verk","text"=>"VERKBE"] */
+    private $trClassMethod = [];
+
+    /**
+     *
+     * @param type pachel/dbClass
+     */
+    public function __construct(&$db = null)
     {
-        parent::__construct($app);
-        $this->Log = new AjanlatLog($this->db);
-        $this->ajanlat = new \TDF\Models\ajanlatModel($this->db);
-    }
-    public function uzenetek(){
-        $path = sslDec($_SERVER["QUERY_STRING"]);
-        if(!preg_match("/aid=([0-9]+)&url=(.+)/",$path,$preg)){
-            $this->app->error(403);
-        }
-        $id = $preg[1];
-        if(isset($_POST["uzenet"]) && !empty($_POST["uzenet"])){
-            $this->Log->msg($_POST["uzenet"],$id);
+        if ($db != null) {
+            $this->db = &$db;
         }
 
-        $sql = file_get_contents(__DIR__."/../sql-queries/ajanlatok/idovonal.sql");
-        $idovonal = $this->db->query($sql)->params($id)->rows();
+        $this->keyfile = __DIR__ . "/../tmp/ta_key_" . md5($_SERVER["HTTP_HOST"] . $_SERVER["SCRIPT_FILENAME"] . session_id());
 
-        $ajanlat = $this->ajanlat->getById($id);
-        foreach ($idovonal AS &$item){
-            //$this->Log->get($item["id"])->
-            $item["header"] = $this->Log->get($item["id"])->title;
-            $item["body"] = $this->Log->get($item["id"])->body;
-            $item["last_data"] = $this->Log->get($item["id"])->last_date;
+        if (!isset($_GET["ta_method"])) {
+            $this->key = md5(time() . microtime());
+            file_put_contents($this->keyfile, $this->key);
+        } else {
+            $this->key = file_get_contents($this->keyfile);
         }
-        $this->app->set("_idovonal",$idovonal,1);
-        $this->app->set("_url",$preg[2]);
-        $this->app->set("_ajanlat",$ajanlat);
-        $this->loadContent("ajanlatok/uzenetek.php");
-    }
-    private function ms_body($id_msg){
-        $this->db->settings()->setResultmodeToObject();
-        $msg = $this->Log->getById($id_msg);
-        $this->db->settings()->setResultmodeToDefault();
     }
 
-
-    public function visszadob(){
-
-        $path = sslDec($_SERVER["QUERY_STRING"]);
-        if(!preg_match("/id=([0-9]+)&url=(.+)&met=(.+)/",$path,$preg)){
-            $this->app->error(403);
+    /**
+     *
+     * @return type
+     */
+    public static function instance()
+    {
+        if (empty(self::$self)) {
+            $ref = new \Reflectionclass("pachel\TableAdmin");
+            $args = func_get_args();
+            self::$self = ($args ? $ref->newinstanceargs($args) : new TableAdmin());
         }
-        $id = $preg[1];
-        $met = $preg[3];
+        return self::$self;
+    }
 
+    private function setBaseUrl()
+    {
+        $this->config["url_full"] = $_SERVER["REQUEST_SCHEME"] . "://" . $_SERVER["SERVER_NAME"] . $_SERVER["REDIRECT_URL"];
+    }
 
-        //$prev = $this->ajanlat->prevStatusz($id);
-        $ajanlat = $this->db->query("SELECT *FROM aa_ajanlatok WHERE id=?")->params($id)->line();
-        if(isset($_POST) && $_POST["h"] == 12){
-            if($met == "visszadob") {
-                $prev = $this->ajanlat->prevStatusz($ajanlat["id"]);
+    public function addVariable($name, $value)
+    {
+        $this->_variables[$name] = $value;
+    }
+
+    private function replaceVariable($string)
+    {
+
+        if(!is_array($this->_variables) || empty($this->_variables)){
+            return $string;
+        }
+
+        foreach ($this->_variables AS $varname => $value){
+            $search[] = "{{".$varname."}}";
+            $replace[] = $value;
+        }
+        $string = str_replace($search,$replace,$string);
+        return $string;
+    }
+    /**
+     *
+     * @param type $config
+     */
+    public function loadConfig($config)
+    {
+        if (is_array($config)) {
+            $this->config = $config;
+            return;
+        }
+        if (!is_array($config)) {
+            if (is_file($config)) {
+                $this->config = json_decode(file_get_contents($config), true);
+            } else {
+                throw new \Exception(error(1));
             }
-            else{
-                $prev = $this->ajanlat->nextStatusz($ajanlat["id"]);
+        }
+        $this->setBaseUrl();
+        foreach ($this->config["cols"] as &$col) {
+
+            if (!isset($col["alias"])) {
+                $col["alias"] = $col["name"];
             }
-            if ($met == "torol"){
-                $this->db->update("aa_ajanlatok",["id_statuszok"=>AA_DELETED_ID],["id"=>$id]);
-                $this->Log->del()->ajanlat($id);
+            /**
+             * Csekkoljuk a string opciót
+             */
+            if (isset($col["string"])) {
+                $this->strings[$col["alias"]] = $col["string"];
+            }
+        }
+        if (isset($this->config["keycheck"]) && !$this->config["keycheck"]) {
+            $this->keyCheck = false;
+        }
+    }
+
+    private function runActions()
+    {
+        if (isset($_POST) && !empty($_POST)) {
+            if ($_GET["ta_method"] == "edit") {
+                if ($_GET["key"] == $this->key || !$this->keyCheck) {
+                    $this->saveForm();
+                } else {
+                    throw new \Exception(error(2));
+                }
+            } elseif ($_GET["ta_method"] == "add") {
+                if ($_GET["key"] == $this->key || !$this->keyCheck) {
+                    $this->saveForm();
+                    if (isset($this->config["url_full"]) && !empty($this->config["url_full"])) {
+                        header("location:" . $this->config["url_full"]);
+                    } else {
+                        header("location:" . $this->config["baseUrl"] . $this->config["url"]);
+                    }
+                    exit();
+                } else {
+                    throw new \Exception(error(2));
+                }
+            } else {
+
+            }
+        }
+
+        if (isset($_GET["ta_method"]) && $_GET["ta_method"] == "delete") {
+            if ($_GET["key"] == $this->key || !$this->keyCheck) {
+
+                if (isset($this->buttonActionMethods["delete"]) && gettype($this->buttonActionMethods["delete"]) == "object") {
+
+                    $this->buttonActionMethods["delete"]($_GET["id"]);
+//                    $this->db->toDatabase($this->config["delete"]);
+                } else {
+                    $this->db->delete($this->config["formTable"], [$this->config["id"] => $_GET["id"]]);
+                }
+                if (isset($this->config["url_full"]) && !empty($this->config["url_full"])) {
+                    header("location:" . $this->config["url_full"]);
+                } else {
+                    header("location:" . $this->config["baseUrl"] . $this->config["url"]);
+                }
+                exit();
+            } else {
+                throw new \Exception(error(3));
+            }
+        }
+        if (isset($_GET["ta_method"]) && $_GET["ta_method"] != "edit" && $_GET["ta_method"] != "add") {
+            if ($_GET["key"] == $this->key || !$this->keyCheck) {
+                if (isset($this->buttonActionMethods[$_GET["ta_method"]]) && gettype($this->buttonActionMethods[$_GET["ta_method"]]) == "object") {
+                    $this->buttonActionMethods[$_GET["ta_method"]]($_GET["id"]);
+                }
+            }
+            //die($this->buttonMethods[$_GET["ta_method"]]);
+            if (isset($this->config["url_full"]) && !empty($this->config["url_full"])) {
+                header("location:" . $this->config["url_full"]);
+            } else {
+                header("location:" . $this->config["baseUrl"] . $this->config["url"]);
+            }
+            exit();
+        }
+    }
+
+    public function addBeforeActionMehod($button, $method)
+    {
+        if (gettype($method) != "object") {
+            return;
+        }
+        $this->beforMethods[$button] = $method;
+
+    }
+
+    private function ifnosave($name)
+    {
+        if (empty($this->onlyFormCols) || !is_array($this->onlyFormCols)) {
+            return false;
+        }
+        foreach ($this->onlyFormCols as &$col) {
+            if ($col["name"] == $name && isset($col["noSave"]) && $col["noSave"]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function saveForm()
+    {
+        $elements = $this->getFormElements();
+        $data = [];
+        foreach ($elements as $name) {
+            if (isset($_POST[$name]) && !$this->ifnosave($name)) {
+                $data[$name] = $_POST[$name];
+            }
+        }
+        foreach ($this->beforMethods as $button => $method) {
+            if ($_GET["ta_method"] == $button) {
+                $this->beforMethods[$button]($_GET["id"]);
+                break;
+            }
+        }
+        if ($_GET["ta_method"] == "edit") {
+            $this->db->update($this->config["formTable"], $data, [(isset($this->config["formId"]) ? $this->config["formId"] : $this->config["id"]) => $_GET["id"]]);
+            if (isset($this->buttonActionMethods["edit"]) && gettype($this->buttonActionMethods["edit"]) == "object") {
+                $this->buttonActionMethods["edit"]($_GET["id"]);
+            }
+        } elseif ($_GET["ta_method"] == "add") {
+            $this->db->insert($this->config["formTable"], $data);
+            if (isset($this->buttonActionMethods["add"]) && gettype($this->buttonActionMethods["add"]) == "object") {
+                $this->buttonActionMethods["add"]($this->db->last_insert_id());
+            }
+        }
+    }
+
+    public function appendConfig($config, $overwrite = true)
+    {
+        if (!is_array($config)) {
+            throw new \Exception(error(4));
+        }
+        if ($overwrite) {
+            //$this->config = array_merge($this->config,$config);
+            $this->addValuesToConfig($config);
+            // print_r($this->config);
+
+        } else {
+
+            foreach ($config as $key => $value) {
+                $this->config[$key] .= $value;
+            }
+        }
+    }
+
+    private function addValuesToConfig($array, &$config = null)
+    {
+        if (!is_array($array)) {
+            return;
+        }
+        if (empty($config)) {
+            $config = &$this->config;
+        }
+        $keys[] = key($array);
+        foreach ($keys as $key) {
+
+            if (!isset($config[$key]) || !is_array($array[$key])) {
+                $config[$key] = $array[$key];
+            } else {
+                $this->addValuesToConfig($array[$key], $config[$key]);
+            }
+        }
+    }
+
+    private function setQuery($limit = [])
+    {
+
+        $sql = "SELECT ";
+
+        foreach ($this->config["cols"] as $index => $col) {
+            $this->cols[] = ["text" => $col["text"]];
+            if ($index > 0) {
+                $sql .= ",";
+            }
+            $sql .= $col["name"] . (isset($col["alias"]) ? " AS " . $col["alias"] : "");
+        }
+        $sql .= ",'' tb___buttons FROM ";
+        foreach ($this->config["tables"] as $index => $table) {
+            if ($index > 0) {
+                $sql .= ",";
+            }
+            $sql .= " " . $table;
+        }
+        if (isset($this->config["where"]) && !empty($this->config["where"])) {
+            $sql .= " WHERE " . $this->config["where"];
+        }
+        if (isset($limit["search"]) && !empty($limit["search"]["value"])) {
+            $search = explode(" ", $limit["search"]["value"]);
+            foreach ($search as $item) {
+                $sql .= " AND (";
+                $ct = 0;
+                foreach ($this->config["cols"] as $index => $col) {
+                    if ($ct > 0) {
+                        $sql .= " OR ";
+                    }
+
+                    if (!isset($col["visible"]) || $col["visible"] != false) {
+                        $sql .= $col["name"] . " LIKE '%" . $item . "%'";
+                        $ct++;
+                    }
+                }
+                $sql .= ")";
+            }
+
+        }
+        if (isset($this->config["last"])) {
+            $sql .= " " . $this->config["last"];
+        }
+        if (!empty($limit) && isset($limit["start"]) && isset($limit["length"])) {
+            if (!empty($limit["order"])) {
+                $sql = preg_replace("/order by [^ ]+$/i", "", $sql);
+                $sql .= " ORDER BY " . $this->config["cols"][$limit["order"]["column"]]["alias"] . " " . $limit["order"]["dir"];
+            }
+            $sql .= " LIMIT " . $limit["start"] . "," . $limit["length"];
+            //  die($sql);
+        }
+
+
+        $this->sql_query = $sql;
+
+    }
+
+    /**
+     *
+     * @param type object
+     * @param type string delete|edit
+     * @return type
+     */
+    public function addMethodToButtonsIfVisible($method, $button/* delete|edit */)
+    {
+        if (gettype($method) != "object") {
+            return;
+        }
+        $this->methods[$button][] = $method;
+    }
+
+    /**
+     *
+     * @param type $method
+     * @param type $button
+     * @return type
+     */
+    public function addButtonActionMethod($button, $method)
+    {
+        if (gettype($method) != "object") {
+            return;
+        }
+        $this->buttonActionMethods[$button] = $method;
+    }
+
+    public function addMethodToTRClass($method)
+    {
+        if (gettype($method) != "object") {
+            return;
+        }
+        $this->trClassMethod[0] = $method;
+    }
+
+    public function addMethodToTDClass()
+    {
+
+    }
+
+    private function checkFormConfig()
+    {
+        /**
+         *
+         */
+        if (isset($this->config["form"])) {
+            foreach ($this->config["form"] as &$row) {
+                foreach ($row as &$col) {
+                    $this->onlyFormCols[] = &$col;
+                }
+            }
+        }
+        if (!empty($this->onlyFormCols)) {
+            foreach ($this->onlyFormCols as &$col) {
+                if (isset($col["sqlData"]) && !empty($col["sqlData"])) {
+                    $col["sqlData"] = $this->replaceVariable($col["sqlData"]);
+                    $col["data"] = $this->db->fromDatabase($col["sqlData"]);
+                }
+            }
+        }
+    }
+
+    public function addButton($name, $text, $action = NULL, $link_target = "_self", $link = null, $onclick = null)
+    {
+
+        if (!empty($action) && gettype($action) == "object") {
+            $this->addButtonActionMethod($name, $action);
+            //$this->buttonMethods[$name] = $action;
+        }
+        if ($name != "delete" && $name != "edit" && $name != "add") {
+            $this->buttons[] = ["name" => $name, "text" => $text, "target" => $link_target, "link" => $link, "onclick" => $onclick];
+            $this->custom_buttons++;
+        }
+    }
+
+    private function runMethods($button, $row)
+    {
+        if (!isset($this->methods[$button]) || !is_array($this->methods[$button])) {
+            return true;
+        }
+        foreach ($this->methods[$button] as &$method) {
+            if (!$method($row)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private function checkSearchSessions($search)
+    {
+        $live = 20 * 3600;//sec
+        $hash = md5(serialize($search) . serialize($this->config));
+
+
+        if ((isset($_SESSION["search_____"][$hash]) && $_SESSION["search_____"][$hash]["time"] > (time() - $live))) {
+
+            $_SESSION["recordsFiltered"] = $_SESSION["search_____"][$hash]["ct"];
+
+        } else {
+            $_SESSION["search_____"][$hash]["time"] = time();
+
+            $this->setQuery(["search" => $search]);
+            $this->data = $this->db->fromDatabase($this->sql_query);
+            $_SESSION["recordsFiltered"] = count($this->data);
+            $_SESSION["search_____"][$hash]["ct"] = $_SESSION["recordsFiltered"];
+
+        }
+        /*   print_r($_SESSION);
+           die();*/
+    }
+
+    private function setData($limit = [], $type = null)
+    {
+        if (!empty($limit)) {
+            /*
+            if ($limit["draw"] == 1) {
+                $this->setQuery();
+                $this->data = $this->db->fromDatabase($this->sql_query, $type);
+                $_SESSION["recordsTotal"] = count($this->data);
+                $_SESSION["recordsFiltered"] = $_SESSION["recordsTotal"];
             }
             else {
-                $this->ajanlat->update(["id_statuszok" => $prev])->id($id);
-                $uzenet = str_replace("\n", "<br>", $_POST["szoveg"]);
+                if(!$this->checkSearchSessions($limit["search"])){
 
-                $this->Log->sts($ajanlat["id"], $ajanlat["id_statuszok"], $prev, $uzenet);
-            }
-
-            if (!empty($_POST["szoveg"])) {
-                $this->Log->msg($_POST["szoveg"], $id);
-            }
-            $this->app->reroute($preg[2]);
-        }
-        $text = [
-            "tovabbdob" => "Továbbdob",
-            "visszadob" => "Visszadob",
-            "torol"=>"Töröl/Nem gyártható",
-        ];
-        $ajanlat["url"] = $preg[2];
-        $this->app->set("_data",$ajanlat);
-        $this->app->set("_text",$text);
-        $this->app->set("_met",$met);
-        $this->loadContent("ajanlatok/visszadob.php");
-    }
-    private function ajanlatok($uid = null)
-    {
-        //echo encrypt("askjas&dsjh=asdasd",session_id());
-
-
-        $szovegek = [
-            "torol"=>"Töröl/Nem gyártható",
-            "szerkeszt"=>"Módosít",
-            "tovabbdob"=>"Továbbít",
-            "visszadob"=>"Visszadob",
-            "fajlok"=>"Fájlok",
-            "uzenetek"=>"Üzenetek",
-        ];
-        $statusz = new \Pachel\generatedModels\aa_statuszfelelosokModel($this->db);
-        //$this->db->settings()->generateModelClass("aa_ajanlatok");
-
-        //$statuszok = $statusz->eq()->statusz(2)->id_felhasznalok($this->app->User->getID())->rows();
-
-        $admin = new pachel\TableAdmin($this->app->db);
-        $admin->loadConfig(__DIR__ . "/../config/tableadmin/ajanlatok.json");
-        if (!isset($_GET["ta_method"])) {
-            Sessions::set("_LAST_URL", $_SERVER["QUERY_STRING"]);
-        }
-        else {
-            $admin->appendConfig(["url" => "?" . Sessions::get("_LAST_URL")], false);
-        }
-
-        $statuszok = $this->db->query("SELECT id_statuszok FROM aa_statuszfelelosok WHERE statusz=2 AND id_felhasznalok=?")->params($this->app->User->getID())->array();
-        if(in_array(0,$statuszok)){
-            $_statuszok = $this->db->query("SELECT s.* FROM aa_statuszok s WHERE s.statusz=2 ORDER BY sorszam")->rows();
-        }
-        else {
-            $_statuszok = $this->db->query("SELECT s.* FROM aa_statuszfelelosok sf,aa_statuszok s WHERE sf.id_felhasznalok=? AND sf.statusz=2 AND sf.id_statuszok!=0 AND s.id=sf.id_statuszok")->params($this->app->User->getID())->rows();
-        }
-
-        if(isset($_GET["statusz"]) && $_GET["statusz"] != ""){
-            $admin->appendConfig(["where" => " a.id_statuszok IN(" . $_GET["statusz"]. ")"], false);
-        }
-        else {
-            if (isset($_GET["csakazenyem"]) && $_GET["csakazenyem"] == 1) {
-                //   print_r($statuszok);
-                if (!in_array(0, $statuszok)) {
-                    $admin->appendConfig(["where" => " a.id_statuszok IN(" . implode(",", $statuszok) . ")"], false);
-                } else {
-                    $admin->appendConfig(["where" => " a.id_statuszok NOT IN(4,5,6)"], false);
                 }
+                else {
+                    $this->setQuery($limit);
+                }
+            }*/
+            if ($limit["draw"] == 1) {
+                $this->setQuery();
+                $this->data = $this->db->fromDatabase($this->sql_query, $type);
+                $_SESSION["recordsTotal"] = count($this->data);
+                $_SESSION["recordsFiltered"] = $_SESSION["recordsTotal"];
 
+            } else {
+                $this->checkSearchSessions($limit["search"]);
+                $this->setQuery($limit);
+
+                /*
+                $this->setQuery(["search" => $_POST["search"]]);
+                $this->data = $this->db->fromDatabase($this->sql_query, $type);
+                $_SESSION["recordsTotal"] = count($this->data);
+                $_SESSION["recordsFiltered"] = count($this->data);*/
+            }
+
+            $this->setQuery($limit);
+
+        } else {
+            $this->setQuery();
+        }
+        $this->data = $this->db->fromDatabase($this->sql_query, $type);
+        $this->setStringData();
+    }
+
+    /**
+     * Ha a configban van beállítva string opció
+     * akkor itt kicseréljük a szövegeket
+     * @return void
+     */
+    private function setStringData()
+    {
+        if (empty($this->strings)) {
+            return;
+        }
+        foreach ($this->data as &$row) {
+            foreach ($row as $index => &$col) {
+                if (!isset($this->strings[$index])) {
+                    continue;
+                }
+                /**
+                 * template karakter ##|%%
+                 * Kicseréljük amire kell
+                 */
+                $col = str_replace(["##", "%%"], $col, $this->strings[$index]);
+            }
+        }
+    }
+
+    private function getFormElements()
+    {
+        $elements = [];
+        foreach ($this->config["form"] as $row) {
+            foreach ($row as $col) {
+                $elements[] = $col["name"];
+            }
+        }
+        return $elements;
+    }
+
+    private function generateSelectToForm()
+    {
+        $sql = "SELECT ";
+        $elements = $this->getFormElements();
+        $counter = 0;
+        foreach ($elements as $index => $col) {
+            if (!$this->ifnosave($col)) {
+                if ($counter > 0) {
+                    $sql .= ",";
+                }
+                $sql .= $col;
+                $counter++;
             }
         }
 
-        //},"_self",null,"return confirm('Biztos hogy továbbdobot az ajánlatot?')");
-
-        $admin->addMethodToButtonsIfVisible(function ($row){
-            if($row["statusz_statusz"]==0){
-                return false;
-            }
-            if($row["id_statuszok"] == $this->ajanlat->lastId() || !$this->ajanlat->sajateAzAjanlat($row["id"])){
-                return false;
-            }
-            return true;
-        },"tovabbdob");
-
-        $admin->addButton("fajlok", $szovegek["fajlok"]." (%fajlok)", function ($id) {
-            //   $this->app->reroute("Penzugy/fajlok?" . base64_encode("id=" . $id . "&table=aa_ajanlatfajlok&name=id_ajanlatok&url=" . $this->app->get("PATH") . "?" . Sessions::get("_LAST_URL")));
-            $this->app->reroute("Penzugy/fajlok?" . base64_encode("id=" . $id . "&table=aa_ajanlatfajlok&name=id_ajanlatok&url=" . $this->app->get("PATH") . "?" . Sessions::get("_LAST_URL")));
-        });
-
-        $admin->addButton("uzik", $szovegek["uzenetek"], function ($id) {
-            $this->app->reroute("Ajanlatok/uzenetek?".sslEnc("aid=".$id."&url=Ajanlatok/teszt?".Sessions::get("_LAST_URL")));
-        });
-
-        $admin->addButton("visszadob", $szovegek["visszadob"], function ($id) {
-            $this->app->reroute("Ajanlatok/visszadob?".sslEnc("id=".$id."&url=Ajanlatok/teszt?".Sessions::get("_LAST_URL")."&met=visszadob"));
-        });
-        //},"_self",null,"return confirm('Biztos hogy visszadobod az ajánlatot az előző státuszra?')");
-
-
-
-        $admin->addButton("tovabbdob", $szovegek["tovabbdob"], function ($id) {
-
-            $this->app->reroute("Ajanlatok/visszadob?".sslEnc("id=".$id."&url=Ajanlatok/teszt?".Sessions::get("_LAST_URL")."&met=tovabbdob"));
-        });
-        $admin->addMethodToButtonsIfVisible(function ($row){
-            if($row["statusz_statusz"]==0){
-                return false;
-            }
-            if($row["id_statuszok"] == $this->ajanlat->firstId() || !$this->ajanlat->sajateAzAjanlat($row["id"]) || $row["id_statuszok"] == $this->ajanlat->lastId()){
-                return false;
-            }
-            return true;
-        },"visszadob");
-
-        $admin->addBeforeActionMehod("edit",function ($id){
-            $this->Log->set()->ajanlat($id);
-        });
-
-
-        $admin->addMethodToButtonsIfVisible(function ($row){
-            if($row["statusz_statusz"]==0){
-                return false;
-            }
-            return $this->ajanlat->sajateAzAjanlat($row["id"]);
-        },"edit");
-
-        $admin->addMethodToButtonsIfVisible(function ($row){
-            if($row["statusz_statusz"]==0){
-                return false;
-            }
-            return $this->ajanlat->sajateAzAjanlat($row["id"]);
-        },"fajlok");
-
-        $admin->addMethodToButtonsIfVisible(function ($row){
-            if($row["statusz_statusz"]==0){
-                return false;
-            }
-            return $this->ajanlat->sajateAzAjanlat($row["id"]);
-        },"delete");
-
-
-        $admin->addButton("delete",$szovegek["torol"],function ($id){
-            /*
-            $this->db->update("aa_ajanlatok",["id_statuszok"=>6],["id"=>$id]);
-            $this->Log->del()->ajanlat($id);
-            */
-            $this->app->reroute("Ajanlatok/visszadob?".sslEnc("id=".$id."&url=Ajanlatok/teszt&met=torol"));
-        },"_self",null,"return confirm('Biztos hogy törli az ajánlatot?')");
-
-        $admin->addButton("add",null,function ($id){
-            $azonosito = $this->ajanlat->getID($id);
-            if(is_numeric($id)){
-                //$this->ajanlat->update(["azonosito"=>$azonosito])->id($id);
-                $this->ajanlat->up()->azonosito($azonosito)->where()->id($id)->exec();
-                //$this->db->update("aa_ajanlatok",["azonosito"=>$azonosito],["id"=>$id]);
-                $this->Log->new()->ajanlat($id);
-                $this->Log->sts($id,0,$_POST["id_statuszok"],"Új ajánlat lett rögzítve");
-            }
-        });
-        $admin->addMethodToTRClass(function ($row){
-            if($row["id_statuszok"]==AA_DELETED_ID){
-                return "text-deleted";
-            }
-            if(!$this->ajanlat->sajateAzAjanlat($row["id"])){
-                return "text-inactive";
-            }
-            if($row["varakozas"]>0 && $row["last"]>=$row["varakozas"]){
-                return "bg-pink";
-            }
-        });
-        $admin->addVariable("userid",Base::instance()->User->getId());
-        $this->app->set("_filter", 'filters/aa-ajanlatokhoz.php');
-        $this->app->set("_admin", $admin);
-        $this->app->set("_statuszok", $_statuszok);
-        $this->loadContent("tableadmin.php");
+        $sql .= " FROM " . $this->config["formTable"];
+        $sql .= " WHERE " . $this->config["id"] . "=" . $_GET["id"];
+        $sql = $this->replaceVariable($sql);
+        return $sql;
     }
-    public function ajanlatok_sajat()
+
+    public function getJS()
+    {
+        echo "<script type=\"text/javascript\" src=\"" . $this->getDirName() . "/js/datatables.min.js\"></script>";
+    }
+
+    public function show()
+    {
+        if (empty($this->config)) {
+            throw new \Exception(error(0));
+        }
+        $this->checkFormConfig();
+
+        $this->runActions();
+
+        if (!isset($_GET["ta_method"])) {
+            $this->setData();
+            require __DIR__ . "/../tpls/generateTable.php";
+            require __DIR__ . "/../tpls/datatable.js.php";
+
+        } elseif ($_GET["ta_method"] == "edit") {
+
+            $result = $this->db->fromDatabase($this->generateSelectToForm(), "@line");
+            require __DIR__ . "/../tpls/editForm.php";
+        } elseif ($_GET["ta_method"] == "add") {
+            require __DIR__ . "/../tpls/editForm.php";
+        }
+    }
+
+    public function checkAjaxRequest()
+    {
+        $this->checkFormConfig();
+        $this->runActions();
+
+
+        if (isset($_POST["draw"])) {
+            $limit = [
+                "start" => $_POST["start"],
+                "length" => $_POST["length"],
+                "draw" => $_POST["draw"],
+                "search" => $_POST["search"],
+                "order" => (isset($_POST["order"][0]) ? $_POST["order"][0] : null)
+            ];
+            $this->setData($limit);
+            $data_array = [];
+
+            if (!empty($this->data)) {
+                foreach ($this->data as &$row) {
+                    $buttons = $this->generateButtons($row);
+
+                    $row2 = [];
+                    foreach ($row as $index => $value) {
+                        if (!isset($this->config["cols"][$index]["visible"]) || !$this->config["cols"][$index]["visible"]) {
+                            //print_r($this->config["cols"][$index]["visible"]);
+                            $row2[] = $value;
+                        }
+                    }
+                    if (empty($buttons)) {
+                        //unset($row["tb___buttons"]);
+                    } else {
+
+                        $row2[count($row) - 1] = $buttons;
+                    }
+                    $data_array[] = $row2;
+                }
+            }
+            header('Content-Type: application/json;charset=utf-8');
+            $data = [
+                "draw" => $_POST["draw"],
+                //"recordsTotal" => $_SESSION["recordsTotal"],
+                "recordsTotal" => $_SESSION["recordsTotal"],
+                //"recordsFiltered" => $_SESSION["recordsFiltered"],
+                "recordsFiltered" => $_SESSION["recordsFiltered"],
+                "data" => $data_array
+
+            ];
+
+            echo json_encode($data, JSON_PRETTY_PRINT);
+            die();
+        }
+    }
+
+    private function linkCsere($link, $row)
+    {
+        $c = [];
+        foreach ($row as $index => $value) {
+            $c[0][] = "%" . $index;
+            $c[1][] = $value;
+        }
+        return str_replace($c[0], $c[1], $link);
+    }
+
+    private function generateButtons($row)
+    {
+        $html = "";
+        if ((isset($this->config["form"]) && !empty($this->config["form"])) || $this->custom_buttons > 0):
+            $html = "<td>";
+            if (((isset($this->config["form"]) && !empty($this->config["form"])) || (isset($this->config["deleteButton"]) && $this->config["deleteButton"])) && $this->runMethods("delete", $row)):
+                $html .= "[<a href=\"" . $this->config["url"] . "?ta_method=delete&key=" . $this->key . "&id=" . $row[$this->config["id"]] . "\" onclick=\"return confirm('Biztos hogy törli?')\">Töröl</a>]";
+            endif;
+            if ((isset($this->config["form"]) && !empty($this->config["form"])) && $this->runMethods("edit", $row)):
+                $html .= "[<a href=\"" . $this->config["url"] . "?ta_method=edit&key=" . $this->key . "&id=" . $row[$this->config["id"]] . "\">Szerkeszt</a>]";
+            endif;
+            foreach ($this->buttons as $button):if ($this->runMethods($button["name"], $row)):
+                if (empty($button["link"])) {
+                    $button["link"] = $this->config["url"] . "?ta_method=" . $button["name"] . "&key=" . $this->key . "&id=" . $row[$this->config["id"]];
+                }
+                $button["link"] = $this->linkCsere($button["link"], $row);
+                $button["onclick"] = $this->linkCsere($button["onclick"], $row);
+                $html .= "[<a href=\"" . $button["link"] . "\" target=\"" . $button["target"] . "\"" . (!empty($button["onclick"]) ? " onclick=\"" . $button["onclick"] . "\"" : "") . ">" . $this->linkCsere($button["text"],$row) . "</a>]";
+
+            endif;endforeach;
+            $html .= "</td>";
+        endif;
+        return $html;
+    }
+
+    private function getDirName()
     {
 
+        $root = str_replace($_SERVER["DOCUMENT_ROOT"], '', str_replace(["\\", "/src"], ["/", ""], __DIR__));
+        return $_SERVER["REQUEST_SCHEME"] . "://" . $_SERVER["SERVER_NAME"] . $root . "";
     }
-    public function teszt()
-    {
-        // $this->db->settings()->generateModelClass("aa_ajanlatok");
-        $this->ajanlatok();
 
+    private function getAjaxData()
+    {
+        $data = [];
+        foreach ($this->data as $item) {
+            $rc = [];
+            foreach ($item as $row) {
+                $rc[] = $row;
+            }
+            $rc[] = "";
+            $data[] = $rc;
+        }
+        return $data;
+    }
+
+    private function addParamaterToWhere($param)
+    {
+        if (empty($param)) {
+            return;
+        }
+        $having = " HAVING ";
+        if (!empty($this->config["last"])) {
+            //$where = " AND ";
+        }
+        if (!is_array($param)) {
+            $having .= "(";
+            foreach ($this->config["cols"] as $index => $col) {
+                if ($index > 0) {
+                    $having .= " OR ";
+                }
+                $having .= "`" . $col["alias"] . "` LIKE '%" . $param . "%'";
+            }
+            $having .= ")";
+        }
+        if (strlen($param) > 5) {
+            // $this->config["last"] = preg_replace("/LIMIT [0-9]+/i", "", $this->config["last"]);
+            //die($this->config["last"]);
+        }
+        $this->config["last"] = $having;
+        // die($having);
+    }
+
+    /**
+     * @param $param
+     */
+    public function ajaxSearch($param = [])
+    {
+        /*print_r($_GET);
+        die();*/
+        $data = [
+            "draw" => 1,
+            "recordsTotal" => 10,
+            "recordsFiltered" => 10,
+            "data" => []
+        ];
+        $this->addParamaterToWhere($param);
+        $this->setData();
+
+        $data["data"] = $this->getAjaxData();
+        $data["recordsFiltered"] = count($data["data"]);
+        return json_encode($data, JSON_PRETTY_PRINT);
+    }
+
+    private function setError($text)
+    {
+        $this->errorText = $text;
+    }
+
+    private function getError()
+    {
+        $html = $this->errorText;
+        if (empty($this->errorText)) {
+            return "";
+        }
+
+        return $html;
     }
 }
