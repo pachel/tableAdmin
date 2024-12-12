@@ -673,11 +673,22 @@ class TableAdmin
     private function linkCsere($link, $row)
     {
         $c = [];
-        foreach ($row as $index => $value) {
-            $c[0][] = "%" . $index;
-            $c[1][] = $value;
+        if(preg_match("/%/",$link)) {
+            foreach ($row as $index => $value) {
+                $c[0][] = "%" . $index;
+                $c[1][] = $value;
+            }
+            $link = str_replace($c[0], $c[1], $link);
         }
-        return str_replace($c[0], $c[1], $link);
+        if(preg_match_all("/\{(.+?)\}/",$link,$preg)) {
+            foreach ($preg[1] AS $name){
+                $c[0][] = "{" . $name."}";
+                $c[1][] = (isset($row[$name])?$row[$name]:"{" . $name."}");
+            }
+            $link = str_replace($c[0], $c[1], $link);
+        }
+
+        return $link;
     }
 
     private function generateButtons($row)
