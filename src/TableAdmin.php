@@ -195,6 +195,15 @@ class TableAdmin
 
             }
         }
+        else{
+            if (isset($_GET["ta_method"]) && $_GET["ta_method"] == "add") {
+                if ($_GET["key"] == $this->key || !$this->keyCheck) {
+                    if (isset($this->buttonActionMethods[$_GET["ta_method"]]) && gettype($this->buttonActionMethods[$_GET["ta_method"]]) == "object") {
+                        $this->buttonActionMethods[$_GET["ta_method"]]($_GET["id"]);
+                    }
+                }
+            }
+        }
 
         if (isset($_GET["ta_method"]) && $_GET["ta_method"] == "delete") {
             if ($_GET["key"] == $this->key || !$this->keyCheck) {
@@ -216,6 +225,7 @@ class TableAdmin
                 throw new \Exception(error(3));
             }
         }
+
         if (isset($_GET["ta_method"]) && $_GET["ta_method"] != "edit" && $_GET["ta_method"] != "add") {
             if ($_GET["key"] == $this->key || !$this->keyCheck) {
                 if (isset($this->buttonActionMethods[$_GET["ta_method"]]) && gettype($this->buttonActionMethods[$_GET["ta_method"]]) == "object") {
@@ -231,7 +241,10 @@ class TableAdmin
             exit();
         }
     }
+    private function runButton($method)
+    {
 
+    }
     public function addBeforeActionMehod($button, $method)
     {
         if (gettype($method) != "object") {
@@ -372,8 +385,9 @@ class TableAdmin
             //  die($sql);
         }
 
-
+        $sql = $this->replaceVariable($sql);
         $this->sql_query = $sql;
+
 
     }
 
