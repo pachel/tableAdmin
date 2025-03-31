@@ -48,6 +48,10 @@ ini_set("display_errors", true);
                 }
             });
             //$tdadmin->checkAjaxRequest();
+            $button = new Button("add");
+            $button->addAction(function ($d){
+
+            },Button::$RUN_WITHOUT_ACTION);
             $tdadmin->show();
             ?>
         </div>
