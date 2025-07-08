@@ -114,6 +114,8 @@ class TableAdmin
     private function setBaseUrl()
     {
         $this->config["url_full"] = $_SERVER["REQUEST_SCHEME"] . "://" . $_SERVER["SERVER_NAME"] . $_SERVER["REDIRECT_URL"];
+        $this->config["url_full"] = str_replace("index.php", "", $this->config["url_full"]). $this->config["url"];
+
     }
 
     public function addVariable($name, $value)
@@ -152,7 +154,7 @@ class TableAdmin
                 throw new \Exception(error(1));
             }
         }
-        $this->setBaseUrl();
+
         foreach ($this->config["cols"] as &$col) {
 
             if (!isset($col["alias"])) {
@@ -612,6 +614,7 @@ class TableAdmin
         if (empty($this->config)) {
             throw new \Exception(error(0));
         }
+        $this->setBaseUrl();
         $this->checkFormConfig();
         $this->runActions();
 
