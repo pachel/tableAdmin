@@ -570,7 +570,6 @@ class TableAdmin
             }
         }
     }
-
     private function getFormElements()
     {
         $elements = [];
@@ -614,8 +613,9 @@ class TableAdmin
             throw new \Exception(error(0));
         }
         $this->checkFormConfig();
-
         $this->runActions();
+
+        $this->replaceAllVariables();
 
         if (!isset($_GET["ta_method"])) {
             $this->setData();
@@ -812,5 +812,28 @@ class TableAdmin
         }
 
         return $html;
+    }
+    private function replaceAllVariables(&$config = null)
+    {
+
+        if(empty($this->_variables) || !is_array($this->_variables)){
+            //  echo "No variables to replace.<br>";
+
+            return;
+        }
+        if (empty($config)) {
+            $config = &$this->config;
+        }
+        foreach ($config as $key => &$value) {
+            if (is_array($value)) {
+                $this->replaceAllVariables($value);
+            } else {
+                //echo $key.": ".$value."<br>";
+                if (is_string($value)) {
+                    $config[$key] = $this->replaceVariable($value);
+                }
+            }
+        }
+
     }
 }
