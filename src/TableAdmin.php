@@ -820,18 +820,16 @@ class TableAdmin
     {
 
         if(empty($this->_variables) || !is_array($this->_variables)){
-            //  echo "No variables to replace.<br>";
-
             return;
         }
-        if (empty($config)) {
+        if ($config === null) {
             $config = &$this->config;
         }
         foreach ($config as $key => &$value) {
             if (is_array($value)) {
                 $this->replaceAllVariables($value);
+                //echo $key.":".print_r($value,true)."<br>";
             } else {
-                //echo $key.": ".$value."<br>";
                 if (is_string($value)) {
                     $config[$key] = $this->replaceVariable($value);
                 }
