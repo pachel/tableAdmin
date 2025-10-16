@@ -114,7 +114,10 @@ class TableAdmin
     private function setBaseUrl()
     {
         $this->config["url_full"] = $_SERVER["REQUEST_SCHEME"] . "://" . $_SERVER["SERVER_NAME"] . $_SERVER["REDIRECT_URL"];
-        $this->config["url_full"] = str_replace("index.php", "", $this->config["url_full"]). $this->config["url"];
+
+        if($_SERVER["HTTP_HOST"] == "localhost") {
+            $this->config["url_full"] = str_replace("index.php", "", $this->config["url_full"]) . $this->config["url"];
+        }
 
     }
 
@@ -174,6 +177,8 @@ class TableAdmin
 
     private function runActions()
     {
+
+
         if (isset($_POST) && !empty($_POST)) {
             if ($_GET["ta_method"] == "edit") {
                 if ($_GET["key"] == $this->key || !$this->keyCheck) {
@@ -184,6 +189,7 @@ class TableAdmin
             } elseif ($_GET["ta_method"] == "add") {
                 if ($_GET["key"] == $this->key || !$this->keyCheck) {
                     $this->saveForm();
+
                     if (isset($this->config["url_full"]) && !empty($this->config["url_full"])) {
                         header("location:" . $this->config["url_full"]);
                     } else {
@@ -389,7 +395,6 @@ class TableAdmin
 
         $sql = $this->replaceVariable($sql);
         $this->sql_query = $sql;
-
 
     }
 
