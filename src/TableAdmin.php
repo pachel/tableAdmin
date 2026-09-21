@@ -606,6 +606,7 @@ class TableAdmin
                 $elements[] = $col["name"];
             }
         }
+        //s
         return $elements;
     }
 
