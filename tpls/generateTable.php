@@ -18,7 +18,7 @@
         <?php foreach ($this->data AS $row):?>
             <tr<?=(!empty($this->trClassMethod)?" class=\"".$this->trClassMethod[0]($row)."\"":"")?>>
                 <?php foreach ($this->config["cols"] AS $sor): if(!isset($sor["visible"]) || $sor["visible"]):?>
-                    <td><?=$row[$sor["alias"]]?></td>
+                    <td><?=(is_array($row)?$row[$sor["alias"]]:$row->{$sor["alias"]})?></td>
                 <?php endif;endforeach;?>
                 <?=$this->generateButtons($row)?>
             </tr>

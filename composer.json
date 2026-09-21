@@ -2,7 +2,7 @@
     "name": "pachel/tableadmin",
     "description": "Table content editor",
     "require": {
-
+        "pachel/dbclass": "dev-master"
     },
     "autoload": {      
         "classmap": ["src/"],

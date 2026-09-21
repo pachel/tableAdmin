@@ -1,0 +1,21 @@
+{
+    "url" : "felhasznalok.php",
+
+    "tables": ["b_felhasznalok"],
+    "id": "id",
+    "addButton": true,
+    "cols": [
+        {
+            "name": "id",
+            "text": "ID"
+        },
+        {
+            "name": "email",
+            "text": "email"
+        },
+        {
+            "name": "nev",
+            "text": "e"
+        }
+    ]
+}
