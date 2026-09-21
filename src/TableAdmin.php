@@ -615,7 +615,7 @@ class TableAdmin
         $elements = $this->getFormElements();
         $counter = 0;
         foreach ($elements as $index => $col) {
-            if (!$this->ifnosave($col)) {
+            /*if (!$this->ifnosave($col)) */{
                 if ($counter > 0) {
                     $sql .= ",";
                 }
