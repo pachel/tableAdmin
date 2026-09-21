@@ -465,12 +465,24 @@ class TableAdmin
         }
     }
 
+    /**
+     * @param $name
+     * @param $text
+     * @param object|string $action method vagy link
+     * @param $link_target
+     * @param $link
+     * @param $onclick
+     * @return void
+     */
     public function addButton($name, $text, $action = NULL, $link_target = "_self", $link = null, $onclick = null)
     {
 
         if (!empty($action) && gettype($action) == "object") {
             $this->addButtonActionMethod($name, $action);
             //$this->buttonMethods[$name] = $action;
+        }
+        elseif (is_string($action) ){
+            $link = $action;
         }
         if ($name != "delete" && $name != "edit" && $name != "add") {
             $this->buttons[] = ["name" => $name, "text" => $text, "target" => $link_target, "link" => $link, "onclick" => $onclick];
@@ -709,7 +721,7 @@ class TableAdmin
         if(preg_match_all("/\{(.+?)\}/",$link,$preg)) {
             foreach ($preg[1] AS $name){
                 $c[0][] = "{" . $name."}";
-                $c[1][] = (isset($row[$name])?$row[$name]:"{" . $name."}");
+                $c[1][] = (is_array($row)?(isset($row[$name])?$row[$name]:"{" . $name."}"):(is_object($row)?(isset($row->{$name})?$row->{$name}:"{" . $name."}"):""));
             }
             $link = str_replace($c[0], $c[1], $link);
         }
@@ -729,6 +741,9 @@ class TableAdmin
                 $html .= "[<a href=\"" . $this->config["url"] . "?ta_method=edit&key=" . $this->key . "&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]) . "\">Szerkeszt</a>]";
             endif;
             foreach ($this->buttons as $button):if ($this->runMethods($button["name"], $row)):
+                if(is_string($button["method"])){
+                    $button["link"] = $button["method"];
+                }
                 if (empty($button["link"])) {
                     $button["link"] = $this->config["url"] . "?ta_method=" . $button["name"] . "&key=" . $this->key . "&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]);
                 }

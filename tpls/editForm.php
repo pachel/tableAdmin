@@ -5,13 +5,19 @@
  * and open the template in the editor.
  */
 echo $this->getError();
+
+if(is_object($result)){
+    $result = (array)$result;
+
+}
 ?>
 
 <form method="post">
     <?php foreach ($this->config["form"] AS $row): ?>
         <div class="row">
-            <?php foreach ($row AS $col): if ($col["type"] == "hidden"): ?>
-                <input type="hidden" id="ta_form_<?= $col["name"] ?>" name="<?= $col["name"] ?>" value="<?= (isset($col["value"]) ? $col["value"] : (isset($result[$col["name"]]) ? $result[$col["name"]] : "")) ?>">
+            <?php foreach ($row AS $col): if ($col["type"] == "hidden"):
+                ?>
+                <input type="hidden" id="ta_form_<?= $col["name"] ?>" name="<?= $col["name"] ?>" value="<?= (isset($col["value"]) ? $col["value"] : (isset($result[$col["name"]]) ? $result[$col["name"]]:"")) ?>">
             <?php else : ?>
                 <div class="col<?= (isset($col["bt_num"]) ? "-" . $col["bt_num"] : "") ?>">
                     <div class="form-group mb-3">
@@ -33,10 +39,10 @@ echo $this->getError();
                                 <?php endforeach;
                                 endif; ?>
                             </select>
-                        <?php elseif ($col["type"] == "hidden"): ?>
-                            <input type="hidden" class="form-control" id="ta_form_<?= $col["name"] ?>" name="<?= $col["name"] ?>" value="<?= (isset($col["value"]) ? $col["value"] : (isset($result[$col["name"]]) ? $result[$col["name"]] : "")) ?>">
+                        <?php elseif ($col["type"] == "hidden"):?>
+                            <input type="hidden" class="form-control" id="ta_form_<?= $col["name"] ?>" name="<?= $col["name"] ?>" value="<?= (isset($col["value"]) ? $col["value"] : (is_array($result) ? $result[$col["name"]] : $result->{$col["name"]})) ?>">
                         <?php else: ?>
-                            <input type="<?= $col["type"] ?>" class="form-control" id="ta_form_<?= $col["name"] ?>" placeholder="<?= $col["text"] ?>" name="<?= $col["name"] ?>"<?= ((isset($col["required"]) && $col["required"]) ? " required=\"true\"" : "").(isset($col["maxlength"]) && is_numeric($col["maxlength"])?" maxlength=\"".$col["maxlength"]."\"":"") ?> value="<?= (isset($col["value"]) ? $col["value"] : (isset($result[$col["name"]]) ? $result[$col["name"]] : "")) ?>">
+                            <input type="<?= $col["type"] ?>" class="form-control" id="ta_form_<?= $col["name"] ?>" placeholder="<?= $col["text"] ?>" name="<?= $col["name"] ?>"<?= ((isset($col["required"]) && $col["required"]) ? " required=\"true\"" : "").(isset($col["maxlength"]) && is_numeric($col["maxlength"])?" maxlength=\"".$col["maxlength"]."\"":"") ?> value="<?= (isset($col["value"]) ? $col["value"] : $result[$col["name"]]) ?>">
                         <?php endif; ?>
                     </div>
                 </div>
