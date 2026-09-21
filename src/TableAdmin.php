@@ -79,6 +79,7 @@ class TableAdmin
      */
     private $buttons = []; /* ["name"=>"verk","text"=>"VERKBE"] */
     private $trClassMethod = [];
+    private $get;
 
     /**
      *
@@ -98,7 +99,9 @@ class TableAdmin
         } else {
             $this->key = file_get_contents($this->keyfile);
         }
-        if ($this->db->settings()->getResultmode() == \Pachel\dbClass::DB_RESULT_TYPE_ARRAY) {
+        $this->get = url();
+
+        if($this->db->settings()->getResultmode() == \Pachel\dbClass::DB_RESULT_TYPE_ARRAY){
             $this->array = true;
         }
     }
@@ -121,7 +124,7 @@ class TableAdmin
     {
         $this->config["url_full"] = $_SERVER["REQUEST_SCHEME"] . "://" . $_SERVER["SERVER_NAME"] . $_SERVER["REDIRECT_URL"];
 
-        if ($_SERVER["HTTP_HOST"] == "localhost") {
+        if($_SERVER["HTTP_HOST"] == "localhost") {
             $this->config["url_full"] = str_replace("index.php", "", $this->config["url_full"]) . $this->config["url"];
         }
 
@@ -135,18 +138,17 @@ class TableAdmin
     private function replaceVariable($string)
     {
 
-        if (!is_array($this->_variables) || empty($this->_variables)) {
+        if(!is_array($this->_variables) || empty($this->_variables)){
             return $string;
         }
 
-        foreach ($this->_variables as $varname => $value) {
-            $search[] = "{{" . $varname . "}}";
+        foreach ($this->_variables AS $varname => $value){
+            $search[] = "{{".$varname."}}";
             $replace[] = $value;
         }
-        $string = str_replace($search, $replace, $string);
+        $string = str_replace($search,$replace,$string);
         return $string;
     }
-
     /**
      *
      * @param type $config
@@ -187,14 +189,14 @@ class TableAdmin
 
 
         if (isset($_POST) && !empty($_POST)) {
-            if ($_GET["ta_method"] == "edit") {
-                if ($_GET["key"] == $this->key || !$this->keyCheck) {
+            if ($this->get["ta_method"] == "edit") {
+                if ($this->get["key"] == $this->key || !$this->keyCheck) {
                     $this->saveForm();
                 } else {
                     throw new \Exception(error(2));
                 }
-            } elseif ($_GET["ta_method"] == "add") {
-                if ($_GET["key"] == $this->key || !$this->keyCheck) {
+            } elseif ($this->get["ta_method"] == "add") {
+                if ($this->get["key"] == $this->key || !$this->keyCheck) {
                     $this->saveForm();
 
                     if (isset($this->config["url_full"]) && !empty($this->config["url_full"])) {
@@ -209,25 +211,26 @@ class TableAdmin
             } else {
 
             }
-        } else {
-            if (isset($_GET["ta_method"]) && $_GET["ta_method"] == "add") {
-                if ($_GET["key"] == $this->key || !$this->keyCheck) {
-                    if (isset($this->buttonActionMethods[$_GET["ta_method"]]) && gettype($this->buttonActionMethods[$_GET["ta_method"]]) == "object") {
-                        $this->buttonActionMethods[$_GET["ta_method"]]($_GET["id"]);
+        }
+        else{
+            if (isset($this->get["ta_method"]) && $this->get["ta_method"] == "add") {
+                if ($this->get["key"] == $this->key || !$this->keyCheck) {
+                    if (isset($this->buttonActionMethods[$this->get["ta_method"]]) && gettype($this->buttonActionMethods[$this->get["ta_method"]]) == "object") {
+                        $this->buttonActionMethods[$this->get["ta_method"]]($this->get["id"]);
                     }
                 }
             }
         }
 
-        if (isset($_GET["ta_method"]) && $_GET["ta_method"] == "delete") {
-            if ($_GET["key"] == $this->key || !$this->keyCheck) {
+        if (isset($this->get["ta_method"]) && $this->get["ta_method"] == "delete") {
+            if ($this->get["key"] == $this->key || !$this->keyCheck) {
 
                 if (isset($this->buttonActionMethods["delete"]) && gettype($this->buttonActionMethods["delete"]) == "object") {
 
-                    $this->buttonActionMethods["delete"]($_GET["id"]);
+                    $this->buttonActionMethods["delete"]($this->get["id"]);
 //                    $this->db->toDatabase($this->config["delete"]);
                 } else {
-                    $this->db->delete($this->config["formTable"], [$this->config["id"] => $_GET["id"]]);
+                    $this->db->delete($this->config["formTable"], [$this->config["id"] => $this->get["id"]]);
                 }
                 if (isset($this->config["url_full"]) && !empty($this->config["url_full"])) {
                     header("location:" . $this->config["url_full"]);
@@ -240,13 +243,13 @@ class TableAdmin
             }
         }
 
-        if (isset($_GET["ta_method"]) && $_GET["ta_method"] != "edit" && $_GET["ta_method"] != "add") {
-            if ($_GET["key"] == $this->key || !$this->keyCheck) {
-                if (isset($this->buttonActionMethods[$_GET["ta_method"]]) && gettype($this->buttonActionMethods[$_GET["ta_method"]]) == "object") {
-                    $this->buttonActionMethods[$_GET["ta_method"]]($_GET["id"]);
+        if (isset($this->get["ta_method"]) && $this->get["ta_method"] != "edit" && $this->get["ta_method"] != "add") {
+            if ($this->get["key"] == $this->key || !$this->keyCheck) {
+                if (isset($this->buttonActionMethods[$this->get["ta_method"]]) && gettype($this->buttonActionMethods[$this->get["ta_method"]]) == "object") {
+                    $this->buttonActionMethods[$this->get["ta_method"]]($this->get["id"]);
                 }
             }
-            //die($this->buttonMethods[$_GET["ta_method"]]);
+            //die($this->buttonMethods[$this->get["ta_method"]]);
             if (isset($this->config["url_full"]) && !empty($this->config["url_full"])) {
                 header("location:" . $this->config["url_full"]);
             } else {
@@ -255,12 +258,10 @@ class TableAdmin
             exit();
         }
     }
-
     private function runButton($method)
     {
 
     }
-
     public function addBeforeActionMehod($button, $method)
     {
         if (gettype($method) != "object") {
@@ -293,17 +294,17 @@ class TableAdmin
             }
         }
         foreach ($this->beforMethods as $button => $method) {
-            if ($_GET["ta_method"] == $button) {
-                $this->beforMethods[$button]($_GET["id"]);
+            if ($this->get["ta_method"] == $button) {
+                $this->beforMethods[$button]($this->get["id"]);
                 break;
             }
         }
-        if ($_GET["ta_method"] == "edit") {
-            $this->db->update($this->config["formTable"], $data, [(isset($this->config["formId"]) ? $this->config["formId"] : $this->config["id"]) => $_GET["id"]]);
+        if ($this->get["ta_method"] == "edit") {
+            $this->db->update($this->config["formTable"], $data, [(isset($this->config["formId"]) ? $this->config["formId"] : $this->config["id"]) => $this->get["id"]]);
             if (isset($this->buttonActionMethods["edit"]) && gettype($this->buttonActionMethods["edit"]) == "object") {
-                $this->buttonActionMethods["edit"]($_GET["id"]);
+                $this->buttonActionMethods["edit"]($this->get["id"]);
             }
-        } elseif ($_GET["ta_method"] == "add") {
+        } elseif ($this->get["ta_method"] == "add") {
             $this->db->insert($this->config["formTable"], $data);
             if (isset($this->buttonActionMethods["add"]) && gettype($this->buttonActionMethods["add"]) == "object") {
                 $this->buttonActionMethods["add"]($this->db->last_insert_id());
@@ -484,7 +485,8 @@ class TableAdmin
         if (!empty($action) && gettype($action) == "object") {
             $this->addButtonActionMethod($name, $action);
             //$this->buttonMethods[$name] = $action;
-        } elseif (is_string($action)) {
+        }
+        elseif (is_string($action) ){
             $link = $action;
         }
         if ($name != "delete" && $name != "edit" && $name != "add") {
@@ -596,7 +598,6 @@ class TableAdmin
             }
         }
     }
-
     private function getFormElements()
     {
         $elements = [];
@@ -624,7 +625,7 @@ class TableAdmin
         }
 
         $sql .= " FROM " . $this->config["formTable"];
-        $sql .= " WHERE " . $this->config["id"] . "=" . $_GET["id"];
+        $sql .= " WHERE " . $this->config["id"] . "=" . $this->get["id"];
         $sql = $this->replaceVariable($sql);
         return $sql;
     }
@@ -645,16 +646,17 @@ class TableAdmin
 
         $this->replaceAllVariables();
 
-        if (!isset($_GET["ta_method"])) {
+
+        if (!isset($this->get["ta_method"])) {
             $this->setData();
             require __DIR__ . "/../tpls/generateTable.php";
             require __DIR__ . "/../tpls/datatable.js.php";
 
-        } elseif ($_GET["ta_method"] == "edit") {
+        } elseif ($this->get["ta_method"] == "edit") {
 
             $result = $this->db->fromDatabase($this->generateSelectToForm(), "@line");
             require __DIR__ . "/../tpls/editForm.php";
-        } elseif ($_GET["ta_method"] == "add") {
+        } elseif ($this->get["ta_method"] == "add") {
             require __DIR__ . "/../tpls/editForm.php";
         }
     }
@@ -715,22 +717,22 @@ class TableAdmin
     private function linkCsere($link, $row)
     {
         $c = [];
-        if (preg_match("/%/", $link)) {
+        if(preg_match("/%/",$link)) {
             foreach ($row as $index => $value) {
                 $c[0][] = "%" . $index;
                 $c[1][] = $value;
             }
             $link = str_replace($c[0], $c[1], $link);
         }
-        if (preg_match_all("/\{(.+?)\}/", $link, $preg)) {
-            foreach ($preg[1] as $name) {
-                $c[0][] = "{" . $name . "}";
-                $c[1][] = (is_array($row) ? (isset($row[$name]) ? $row[$name] : "{" . $name . "}") : (is_object($row) ? (isset($row->{$name}) ? $row->{$name} : "{" . $name . "}") : ""));
+        if(preg_match_all("/\{(.+?)\}/",$link,$preg)) {
+            foreach ($preg[1] AS $name){
+                $c[0][] = "{" . $name."}";
+                $c[1][] = (is_array($row)?(isset($row[$name])?$row[$name]:"{" . $name."}"):(is_object($row)?(isset($row->{$name})?$row->{$name}:"{" . $name."}"):""));
             }
             $link = str_replace($c[0], $c[1], $link);
         }
-        if (preg_match("/#ec:(.+)/", $link, $preg)) {
-            $link = url($preg[1]);
+        if(preg_match("/(.+)#ec:(.+)/",$link,$preg)) {
+            $link = $preg[1].url($preg[2]);
         }
         return $link;
     }
@@ -741,21 +743,27 @@ class TableAdmin
         if ((isset($this->config["form"]) && !empty($this->config["form"])) || $this->custom_buttons > 0):
             $html = "<td>";
             if (((isset($this->config["form"]) && !empty($this->config["form"])) || (isset($this->config["deleteButton"]) && $this->config["deleteButton"])) && $this->runMethods("delete", $row)):
-                $html .= "[<a href=\"" . $this->config["url"] . "?ta_method=delete&key=" . $this->key . "&id=" . (is_object($row) ? $row->{$this->config["id"]} : $row[$this->config["id"]]) . "\" onclick=\"return confirm('Biztos hogy törli?')\">Töröl</a>]";
+                //$link = url("ta_method=delete&key=" . $this->key . "&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]) . (isset($this->config["deleteButton"]) && is_string($this->config["deleteButton"]) ? "&ta_delete=" . $this->config["deleteButton"] : ""));
+                $link = url("ta_method=delete&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]) . (isset($this->config["deleteButton"]) && is_string($this->config["deleteButton"]) ? "&ta_delete=" . $this->config["deleteButton"] : ""));
+                $html .= "[<a href=\"" . $this->config["url"] . "?".$link."\" onclick=\"return confirm('Biztos hogy törli?')\">Töröl</a>]";
             endif;
             if ((isset($this->config["form"]) && !empty($this->config["form"])) && $this->runMethods("edit", $row)):
-                $html .= "[<a href=\"" . $this->config["url"] . "?ta_method=edit&key=" . $this->key . "&id=" . (is_object($row) ? $row->{$this->config["id"]} : $row[$this->config["id"]]) . "\">Szerkeszt</a>]";
+                //$link = url("ta_method=edit&key=" . $this->key . "&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]));
+                $link = url("ta_method=edit&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]));
+                $html .= "[<a href=\"" . $this->config["url"] . "?".$link . "\">Szerkeszt</a>]";
             endif;
             foreach ($this->buttons as $button):if ($this->runMethods($button["name"], $row)):
-                if (is_string($button["method"])) {
+                if(is_string($button["method"])){
                     $button["link"] = $button["method"];
                 }
                 if (empty($button["link"])) {
-                    $button["link"] = $this->config["url"] . "?ta_method=" . $button["name"] . "&key=" . $this->key . "&id=" . (is_object($row) ? $row->{$this->config["id"]} : $row[$this->config["id"]]);
+                    //$link = url("ta_method=" . $button["name"] . "&key=" . $this->key . "&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]));
+                    $link = url("ta_method=" . $button["name"] . "&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]));
+                    $button["link"] = $this->config["url"] . "?".$link;
                 }
                 $button["link"] = $this->linkCsere($button["link"], $row);
                 $button["onclick"] = $this->linkCsere($button["onclick"], $row);
-                $html .= "[<a href=\"" . $button["link"] . "\" target=\"" . $button["target"] . "\"" . (!empty($button["onclick"]) ? " onclick=\"" . $button["onclick"] . "\"" : "") . ">" . $this->linkCsere($button["text"], $row) . "</a>]";
+                $html .= "[<a href=\"" . $button["link"] . "\" target=\"" . $button["target"] . "\"" . (!empty($button["onclick"]) ? " onclick=\"" . $button["onclick"] . "\"" : "") . ">" . $this->linkCsere($button["text"],$row) . "</a>]";
 
             endif;endforeach;
             $html .= "</td>";
@@ -816,7 +824,7 @@ class TableAdmin
      */
     public function ajaxSearch($param = [])
     {
-        /*print_r($_GET);
+        /*print_r($this->get);
         die();*/
         $data = [
             "draw" => 1,
@@ -846,12 +854,11 @@ class TableAdmin
 
         return $html;
     }
-
     private function replaceAllVariables(&$config = null)
     {
 
 
-        if (empty($this->_variables) || !is_array($this->_variables)) {
+        if(empty($this->_variables) || !is_array($this->_variables)){
             return;
         }
         if ($config === null) {
