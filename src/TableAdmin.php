@@ -14,6 +14,8 @@
 
 namespace pachel;
 
+use http\Url;
+
 class TableAdmin
 {
 
@@ -842,6 +844,7 @@ class TableAdmin
     }
     private function replaceAllVariables(&$config = null)
     {
+
 
         if(empty($this->_variables) || !is_array($this->_variables)){
             return;
