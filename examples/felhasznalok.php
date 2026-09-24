@@ -7,7 +7,7 @@
 
 namespace pachel;
 session_start();
-error_reporting(E_ALL);
+error_reporting(E_WARNING);
 ini_set("display_errors",true);
 
 ?>
@@ -17,6 +17,9 @@ ini_set("display_errors",true);
         <link rel="stylesheet" href="../vendor/twbs/bootstrap/dist/css/bootstrap.min.css" />
         <link rel="stylesheet" href="../vendor/datatables/datatables/media/css/jquery.dataTables.min.css" />
         <link href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css" rel="stylesheet" />
+        <script type="text/javascript" src="../vendor/components/jquery/jquery.min.js"></script>
+        <script type="text/javascript" src="../vendor/twbs/bootstrap/dist/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="http://localhost/tableadmin/js/datatables.min.js"></script>
     </head>
     <body>            
 
@@ -36,28 +39,22 @@ ini_set("display_errors",true);
 
             $tdadmin = new TableAdmin($db);
             $tdadmin->addButtonActionMethod("delete",function($id){
-                global $db;
-                $db->update("p_cegek",["statusz"=>0],["id"=>$id]);
+
             });
             $tdadmin->addMethodToButtonsIfVisible(function($row) {
-                print_r($row);
-                exit();
-                if ($row["egyedek"] == 0) {
-                    return true;
-                }
+
+
                 return true;
             }, "TEszt");
             $tdadmin->loadConfig(__DIR__ . "/felhasznalok.json");
             $tdadmin->addButton("TEszt","Töröl",function($row){
-                print_r($row);
-                exit();
+
             });
             $tdadmin->show();
             ?>
         </div>
-        <script type="text/javascript" src="../vendor/components/jquery/jquery.min.js"></script>
-        <script type="text/javascript" src="../vendor/twbs/bootstrap/dist/js/bootstrap.min.js"></script>
-        <?php $tdadmin->getJS()?>
+
+
 
 
 <!--

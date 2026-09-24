@@ -8,5 +8,10 @@
     "autoload": {      
         "classmap": ["src/"],
         "files" : ["inc/errors.php"]
-    } 
+    },
+    "require-dev": {
+        "twbs/bootstrap": "^5.3",
+        "datatables/datatables": "^1.10",
+        "components/jquery": "^4.0"
+    }
 }

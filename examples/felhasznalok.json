@@ -3,6 +3,7 @@
 
     "tables": ["b_felhasznalok"],
     "id": "id",
+    "ajax": true,
     "addButton": true,
     "cols": [
         {

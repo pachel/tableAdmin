@@ -2,7 +2,7 @@
     <a href="<?=$this->config["url"].(preg_match("/\?/",$this->config["url"])?"&":"?")."ta_method=add&key=".$this->key?>" class="ta-uj-sor"><?=(is_array($this->config["addButton"])?$this->config["addButton"][1]:(is_string($this->config["addButton"])?$this->config["addButton"]:"Új sor hozzáadása"))?></a>
 <?php endif;?>
 
-<table id="datatables" class="table table-bordered table-striped display">
+<table id="datatables" class="table table-bordered table-striped display" style="width: 100%">
     <thead>
     <tr>
         <?php foreach ($this->config["cols"] AS $sor): if(!isset($sor["visible"]) || $sor["visible"]):?>

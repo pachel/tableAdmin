@@ -122,7 +122,7 @@ class TableAdmin
 
     private function setBaseUrl()
     {
-        $this->config["url_full"] = $_SERVER["REQUEST_SCHEME"] . "://" . $_SERVER["SERVER_NAME"] . $_SERVER["REDIRECT_URL"];
+        $this->config["url_full"] = $_SERVER["REQUEST_SCHEME"] . "://" . $_SERVER["SERVER_NAME"] . (isset($_SERVER["REDIRECT_URL"])?$_SERVER["REDIRECT_URL"]:"");
 
         if($_SERVER["HTTP_HOST"] == "localhost") {
             $this->config["url_full"] = str_replace("index.php", "", $this->config["url_full"]) . $this->config["url"];
@@ -166,11 +166,16 @@ class TableAdmin
                 throw new \Exception(error(1));
             }
         }
-
+        if(!isset($this->config["ajax"]) || !is_bool($this->config["ajax"])){
+            $this->config["ajax"] = false;
+        }
         foreach ($this->config["cols"] as &$col) {
 
             if (!isset($col["alias"])) {
                 $col["alias"] = $col["name"];
+            }
+            if (!isset($col["visible"])) {
+                $col["visible"] = true;
             }
             /**
              * Csekkoljuk a string opciót
@@ -630,13 +635,28 @@ class TableAdmin
         $sql = $this->replaceVariable($sql);
         return $sql;
     }
+    private function getVisibleCols()
+    {
+        $ret = [];
+        foreach ($this->config["cols"] as $col) {
+            if($col["visible"] == true){
+                $ret[] = $col;
+            }
+        }
+        return $ret;
+    }
 
     public function getJS()
     {
         echo "<script type=\"text/javascript\" src=\"" . $this->getDirName() . "/js/datatables.min.js\"></script>";
     }
 
-    public function show()
+    /**
+     * @param bool $show ha nem akarjuk a táblázatot megjeleníteni
+     * @return void
+     * @throws \Exception
+     */
+    public function show($show = true)
     {
         if (empty($this->config)) {
             throw new \Exception(error(0));
@@ -644,17 +664,24 @@ class TableAdmin
         $this->setBaseUrl();
         $this->checkFormConfig();
         $this->runActions();
-
         $this->replaceAllVariables();
-
-
         if (!isset($this->get["ta_method"])) {
-            $this->setData();
-            require __DIR__ . "/../tpls/generateTable.php";
-            require __DIR__ . "/../tpls/datatable.js.php";
+            if(!$show){
+                return;
+            }
+            if($this->config["ajax"]){
+                require __DIR__ . "/../tpls/generateJsTable.php";
+                echo "<script type=\"text/javascript\">";
+                require __DIR__ . "/../tpls/datatable.ajax.js.php";
+                echo "</script>";
+            }
+            else {
+                $this->setData();
+                require __DIR__ . "/../tpls/generateTable.php";
+                require __DIR__ . "/../tpls/datatable.js.php";
+            }
 
         } elseif ($this->get["ta_method"] == "edit") {
-
             $result = $this->db->fromDatabase($this->generateSelectToForm(), "@line");
             require __DIR__ . "/../tpls/editForm.php";
         } elseif ($this->get["ta_method"] == "add") {
@@ -754,7 +781,7 @@ class TableAdmin
                 $html .= "[<a href=\"" . $this->config["url"] . "?".$link . "\">Szerkeszt</a>]";
             endif;
             foreach ($this->buttons as $button):if ($this->runMethods($button["name"], $row)):
-                if(is_string($button["method"])){
+                if(isset($button["method"]) && is_string($button["method"])){
                     $button["link"] = $button["method"];
                 }
                 if (empty($button["link"])) {

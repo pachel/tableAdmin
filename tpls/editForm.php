@@ -5,13 +5,9 @@
  * and open the template in the editor.
  */
 echo $this->getError();
-
 if(is_object($result)){
     $result = (array)$result;
-
 }
-
-
 ?>
 
 <form method="post">
@@ -54,7 +50,7 @@ if(is_object($result)){
                             <?php elseif ($col["type"] == "hidden"):?>
                                 <input type="hidden" class="form-control" id="ta_form_<?= $col["name"] ?>" name="<?= $col["name"] ?>" value="<?= (isset($col["value"]) ? $col["value"] : (is_array($result) ? $result[$col["name"]] : $result->{$col["name"]})) ?>">
                             <?php else: ?>
-                                <input type="<?= $col["type"] ?>" class="form-control" id="ta_form_<?= $col["name"] ?>" placeholder="<?= $col["text"] ?>" name="<?= $col["name"] ?>"<?= ((isset($col["required"]) && $col["required"]) ? " required=\"true\"" : "").(isset($col["maxlength"]) && is_numeric($col["maxlength"])?" maxlength=\"".$col["maxlength"]."\"":"") ?> value="<?= (isset($col["value"]) ? $col["value"] : $result[$col["name"]]) ?>">
+                                <input type="<?= $col["type"] ?>" class="form-control" id="ta_form_<?= $col["name"] ?>" placeholder="<?= $col["text"] ?>" name="<?= $col["name"] ?>"<?= ((isset($col["required"]) && $col["required"]) ? " required=\"true\"" : "").(isset($col["maxlength"]) && is_numeric($col["maxlength"])?" maxlength=\"".$col["maxlength"]."\"":"") ?> value="<?= (isset($col["value"]) ? $col["value"] : $result[$col["name"]]) ?>"<?=(isset($col["readonly"]) && $col["readonly"]?" readonly=\"true\"":"")?>>
                             <?php endif; ?>
                         </div>
                     </div>
