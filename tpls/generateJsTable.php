@@ -8,6 +8,7 @@
     <thead>
     <tr>
         <?php
+
         $cols = $this->columns->getColumnAliases();
         foreach ($cols as $col) {
             echo "<th>$col</th>";
