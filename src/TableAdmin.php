@@ -770,14 +770,16 @@ class TableAdmin
     }
     private function setAjaxSearch()
     {
-        $name = md5("__post".$this->config["url"]);
-        $name_where = md5("__where".$this->config["url"]);
+        $name = md5("__post".$this->getUrl());
+        $name_where = md5("__where".$this->getUrl());
+
         if(isset($_POST["first"])){
             $post = $_POST;
             Session::set($name, $_POST);
         }
         else{
             $this->sql_query = str_replace("/*WHERE*/",Session::get($name_where),$this->sql_query);
+            return;
         }
         $searchValue = trim($post['search']['value'] ?? '');
         $where = "";

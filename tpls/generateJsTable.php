@@ -9,9 +9,9 @@
     <tr>
         <?php
 
-        $cols = $this->columns->getColumnAliases();
+        $cols = $this->columns->getVisibleColumns();
         foreach ($cols as $col) {
-            echo "<th>$col</th>";
+            echo "<th>$col->text</th>";
         }
         if((isset($this->config["form"]) && !empty($this->config["form"])) || $this->custom_buttons > 0){
             echo "<th></th>";
@@ -23,9 +23,9 @@
     <tfoot>
     <tr>
         <?php
-        $cols = $this->columns->getColumnAliases();
+        $cols = $this->columns->getVisibleColumns();
         foreach ($cols as $col) {
-            echo "<th>$col</th>";
+            echo "<th>$col->text</th>";
         }
         if((isset($this->config["form"]) && !empty($this->config["form"])) || $this->custom_buttons > 0) {
             echo "<th></th>";
