@@ -15,6 +15,8 @@
 namespace pachel;
 
 use http\Url;
+use Pachel\Functions\Session;
+use Pachel\TableAdmin\Models\columns;
 
 class TableAdmin
 {
@@ -33,7 +35,7 @@ class TableAdmin
 
     /**
      * pachel/dbClass object
-     * @var type
+     * @var dbClass $db
      */
     private $db;
     /**
@@ -47,7 +49,7 @@ class TableAdmin
     private $key = "";
     private $keyfile = "";
 
-    private $keyCheck = true;
+    private $keyCheck = false;
 
     private $custom_buttons = 0;
     /**
@@ -80,6 +82,10 @@ class TableAdmin
     private $buttons = []; /* ["name"=>"verk","text"=>"VERKBE"] */
     private $trClassMethod = [];
     private $get;
+    /**
+     * @var columns $columns
+     */
+    private $columns;
 
     /**
      *
@@ -104,6 +110,7 @@ class TableAdmin
         if($this->db->settings()->getResultmode() == \Pachel\dbClass::DB_RESULT_TYPE_ARRAY){
             $this->array = true;
         }
+        $this->columns = new columns();
     }
 
     /**
@@ -170,7 +177,7 @@ class TableAdmin
             $this->config["ajax"] = false;
         }
         foreach ($this->config["cols"] as &$col) {
-
+            $this->columns->add($col);
             if (!isset($col["alias"])) {
                 $col["alias"] = $col["name"];
             }
@@ -193,7 +200,7 @@ class TableAdmin
     {
 
 
-        if (isset($_POST) && !empty($_POST)) {
+        if (isset($_POST) && !empty($_POST) && isset($this->get["ta_method"])) {
             if ($this->get["ta_method"] == "edit") {
                 if ($this->get["key"] == $this->key || !$this->keyCheck) {
                     $this->saveForm();
@@ -357,7 +364,7 @@ class TableAdmin
     private function setQuery($limit = [])
     {
 
-        $sql = "SELECT ";
+        $sql = "SELECT /*START_COLUMNS*/";
 
         foreach ($this->config["cols"] as $index => $col) {
             $this->cols[] = ["text" => $col["text"]];
@@ -366,7 +373,7 @@ class TableAdmin
             }
             $sql .= $col["name"] . (isset($col["alias"]) ? " AS " . $col["alias"] : "");
         }
-        $sql .= ",'' tb___buttons FROM ";
+        $sql .= ",'' tb___buttons /*STOP_COLUMNS*/ FROM ";
         foreach ($this->config["tables"] as $index => $table) {
             if ($index > 0) {
                 $sql .= ",";
@@ -374,7 +381,10 @@ class TableAdmin
             $sql .= " " . $table;
         }
         if (isset($this->config["where"]) && !empty($this->config["where"])) {
-            $sql .= " WHERE " . $this->config["where"];
+            $sql .= " WHERE " . $this->config["where"]." /*WHERE*/";
+        }
+        else{
+            $sql.=" WHERE 1 /*WHERE*/";
         }
         if (isset($limit["search"]) && !empty($limit["search"]["value"])) {
             $search = explode(" ", $limit["search"]["value"]);
@@ -651,6 +661,7 @@ class TableAdmin
         echo "<script type=\"text/javascript\" src=\"" . $this->getDirName() . "/js/datatables.min.js\"></script>";
     }
 
+    public $javascript = "";
     /**
      * @param bool $show ha nem akarjuk a táblázatot megjeleníteni
      * @return void
@@ -670,10 +681,22 @@ class TableAdmin
                 return;
             }
             if($this->config["ajax"]){
+                if(isset($this->get["ajax_api"])){
+                    while (ob_get_level() > 0) {
+                        ob_end_clean();
+                    }
+                    header('Content-Type: application/json; charset=utf-8');
+                    $this->ajaxRequest();
+                    exit();
+                }
+
                 require __DIR__ . "/../tpls/generateJsTable.php";
-                echo "<script type=\"text/javascript\">";
+
+                ob_start();
+
                 require __DIR__ . "/../tpls/datatable.ajax.js.php";
-                echo "</script>";
+                $this->javascript = ob_get_clean();
+
             }
             else {
                 $this->setData();
@@ -687,6 +710,113 @@ class TableAdmin
         } elseif ($this->get["ta_method"] == "add") {
             require __DIR__ . "/../tpls/editForm.php";
         }
+    }
+    private function selectOnlyCount()
+    {
+        $sql = str_replace(["/*START_COLUMNS*/"],["COUNT(*) AS ct,"],$this->sql_query);
+        $ret = (array)$this->db->query($sql)->line();
+        return $ret["ct"];
+    }
+    private function ajaxRequest()
+    {
+        $draw = isset($_POST['draw']) ? (int)$_POST['draw'] : 1;
+        $start = isset($_POST['start']) ? (int)$_POST['start'] : 0;
+        $length = isset($_POST['length']) ? (int)$_POST['length'] : 10;
+
+        $this->setQuery();
+        $all = $this->selectOnlyCount();
+        $this->setAjaxSearch();
+
+        $filtered = $this->selectOnlyCount();
+        $data = $this->getLimitedDta($start,$length)->rows();
+        if(is_array($data)){
+            foreach ($data as &$row) {
+                if(is_object($row)){
+                    $row->tb___buttons = $this->generateButtons($row,false);
+                }
+                else{
+                    $row["tb___buttons"] = $this->generateButtons($row,false);
+                }
+
+            }
+        }
+
+        echo json_encode([
+            "draw" => $draw,
+            "recordsTotal" => $all,
+            "recordsFiltered" => $filtered,
+            "data" => $data
+        ]);
+    }
+
+    /**
+     * @param $start
+     * @param $length
+     * @return \Pachel\dbClass\Callbacks\queryCallback
+     */
+    private function getLimitedDta($start, $length)
+    {
+        $this->sql_query.=" LIMIT $start, $length ";
+
+        return $this->db->query($this->sql_query);
+    }
+    private function addWhereToColumn($name, $object)
+    {
+        $this->columns->addWhereCode($name, $object);
+    }
+    public function getUrl()
+    {
+        return $this->config["url"];
+    }
+    private function setAjaxSearch()
+    {
+        $name = md5("__post".$this->config["url"]);
+        $name_where = md5("__where".$this->config["url"]);
+        if(isset($_POST["first"])){
+            $post = $_POST;
+            Session::set($name, $_POST);
+        }
+        else{
+            $this->sql_query = str_replace("/*WHERE*/",Session::get($name_where),$this->sql_query);
+        }
+        $searchValue = trim($post['search']['value'] ?? '');
+        $where = "";
+        if(!empty($post["ta_extra"])) {
+            $where .= " ".$this->sqlWhereFromOutSearch($post["ta_extra"]);
+        }
+        if(!empty($searchValue)) {
+            $where .= " AND ".sqlWhereFromSearchText($searchValue, $this->columns->getColumnNames());
+        }
+        if(isset($post["first"])){
+            Session::set($name_where, $where);
+        }
+        $this->sql_query = str_replace("/*WHERE*/",$where,$this->sql_query);
+    }
+    private function sqlWhereFromOutSearch($posts)
+    {
+        $sql = "";
+        $c=0;
+        foreach ($posts as $name => $value) {
+            $column = $this->columns->getColumn($name);
+            if(empty($column) || empty($column->where) || $value=="") {
+                continue;
+            }
+            if(preg_match_all("/\{post\.".$name."\}/",$column->where,$matches)) {
+                $search = [];
+                $replace = [];
+                foreach ($matches[0] as $index => $match) {
+                    $search[] = $matches[0][$index];
+                    $replace[] = $value;
+                }
+                $sql .= " AND ".str_replace($search,$replace,$column->where);
+            }
+            else{
+                $sql .= " AND ".$column->where;
+            }
+
+        }
+
+        return $sql;
     }
 
     public function checkAjaxRequest()
@@ -765,19 +895,21 @@ class TableAdmin
         return $link;
     }
 
-    private function generateButtons($row)
+    private function generateButtons($row,$withTD=true)
     {
         $html = "";
         if ((isset($this->config["form"]) && !empty($this->config["form"])) || $this->custom_buttons > 0):
-            $html = "<td>";
+            if($withTD) {
+                $html = "<td>";
+            }
             if (((isset($this->config["form"]) && !empty($this->config["form"])) || (isset($this->config["deleteButton"]) && $this->config["deleteButton"])) && $this->runMethods("delete", $row)):
                 //$link = url("ta_method=delete&key=" . $this->key . "&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]) . (isset($this->config["deleteButton"]) && is_string($this->config["deleteButton"]) ? "&ta_delete=" . $this->config["deleteButton"] : ""));
-                $link = url("ta_method=delete&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]) . (isset($this->config["deleteButton"]) && is_string($this->config["deleteButton"]) ? "&ta_delete=" . $this->config["deleteButton"] : ""));
+                $link = url("ta_method=delete&key=" . $this->key . "&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]) . (isset($this->config["deleteButton"]) && is_string($this->config["deleteButton"]) ? "&ta_delete=" . $this->config["deleteButton"] : ""));
                 $html .= "[<a href=\"" . $this->config["url"] . "?".$link."\" onclick=\"return confirm('Biztos hogy törli?')\">Töröl</a>]";
             endif;
             if ((isset($this->config["form"]) && !empty($this->config["form"])) && $this->runMethods("edit", $row)):
                 //$link = url("ta_method=edit&key=" . $this->key . "&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]));
-                $link = url("ta_method=edit&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]));
+                $link = url("ta_method=edit&key=" . $this->key . "&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]));
                 $html .= "[<a href=\"" . $this->config["url"] . "?".$link . "\">Szerkeszt</a>]";
             endif;
             foreach ($this->buttons as $button):if ($this->runMethods($button["name"], $row)):
@@ -786,7 +918,7 @@ class TableAdmin
                 }
                 if (empty($button["link"])) {
                     //$link = url("ta_method=" . $button["name"] . "&key=" . $this->key . "&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]));
-                    $link = url("ta_method=" . $button["name"] . "&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]));
+                    $link = url("ta_method=" . $button["name"] . "&key=" . $this->key . "&id=" . (is_object($row)?$row->{$this->config["id"]}:$row[$this->config["id"]]));
                     $button["link"] = $this->config["url"] . "?".$link;
                 }
                 $button["link"] = $this->linkCsere($button["link"], $row);
@@ -794,7 +926,9 @@ class TableAdmin
                 $html .= "[<a href=\"" . $button["link"] . "\" target=\"" . $button["target"] . "\"" . (!empty($button["onclick"]) ? " onclick=\"" . $button["onclick"] . "\"" : "") . ">" . $this->linkCsere($button["text"],$row) . "</a>]";
 
             endif;endforeach;
-            $html .= "</td>";
+            if($withTD) {
+                $html .= "</td>";
+            }
         endif;
         return $html;
     }

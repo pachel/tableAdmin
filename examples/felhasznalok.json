@@ -12,7 +12,8 @@
         },
         {
             "name": "email",
-            "text": "email"
+            "text": "email",
+            "where": "{self.name} LIKE '%{post.email}'"
         },
         {
             "name": "nev",

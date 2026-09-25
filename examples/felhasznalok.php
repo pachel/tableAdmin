@@ -7,6 +7,7 @@
 
 namespace pachel;
 session_start();
+//ob_start();
 error_reporting(E_WARNING);
 ini_set("display_errors",true);
 
@@ -25,6 +26,17 @@ ini_set("display_errors",true);
 
         <div class="container">
             <h1>Teszt</h1>
+            <form id="tableAdminForm">
+                <select name="statusz">
+                    <option value="">Mindegy</option>
+                    <option value="8">Törölt</option>
+                </select>
+                <select name="email">
+                    <option value="">Mindegy</option>
+                    <option value="tdfsteel.hu">tdfsteel.hu</option>
+                    <option value="tdfsteel.com">tdfsteel.com</option>
+                </select>
+            </form>
             <?php
             require __DIR__ . "/../vendor/autoload.php";
 
@@ -41,6 +53,7 @@ ini_set("display_errors",true);
             $tdadmin->addButtonActionMethod("delete",function($id){
 
             });
+
             $tdadmin->addMethodToButtonsIfVisible(function($row) {
 
 

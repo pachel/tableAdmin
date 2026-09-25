@@ -13,8 +13,9 @@ let table = $('#datatables').DataTable({
         type: 'POST',
         data: function (d) {
             let formData = $('#tableAdminForm').serializeArray();
+            d["ta_extra"] = {};
             $.each(formData, function (i, field) {
-                d[field.name] = field.value;
+                d["ta_extra"][field.name] = field.value;
             });
             d["first"] = 1;
         }
@@ -23,15 +24,17 @@ let table = $('#datatables').DataTable({
     // r = processing, t = table
     // <"dt-bottom-bar"ip> => létrehoz egy .dt-bottom-bar divet az (i)nfo és (p)aginate elemekkel
     dom: '<"dt-top-bar"lf>rt<"dt-bottom-bar"ip>',
-    columns: [<?php $c = 0;$cols = $this->getVisibleCols(); foreach ($cols as $col) {
-        if ($c > 0) {
+    columns: [<?php $c = 0;$cols = $this->columns->getColumnAliases(); foreach ($cols as $col) {
+        if ($c > 0)
             echo ",";
-        }
+        echo "{ data:'" . $col . "' }";
+        $c++;
 
-            echo "{ data:'" . $col["alias"] . "' }";
-            $c++;
-
-    }?>],
+    }
+    if ((isset($this->config["form"]) && !empty($this->config["form"])) || $this->custom_buttons > 0) {
+        echo ",{data: 'tb___buttons'}";
+    }
+    ?>],
     createdRow: function (row, data, dataIndex) {
 
     }
