@@ -8,6 +8,7 @@ let table = $('#datatables').DataTable({
     processing: true,
     serverSide: true,
     searchDelay: 500,
+    stateSave: true,
     ajax: {
         url: '<?=$this->config["url"] . "?" . url("ajax_api=1")?>',
         type: 'POST',
@@ -31,10 +32,16 @@ let table = $('#datatables').DataTable({
         $c++;
 
     }
-    if ((isset($this->config["form"]) && !empty($this->config["form"])) || $this->custom_buttons > 0) {
-        echo ",{data: 'tb___buttons'}";
-    }
-    ?>],
+        if ((isset($this->config["form"]) && !empty($this->config["form"])) || $this->custom_buttons > 0) {
+            echo ",{data: 'tb___buttons'}";
+        }
+        ?>],
+    initComplete: function () {
+        let state = this.api().state.loaded();
+        if (state && state.search && state.search.search) {
+            $('.dataTables_filter input').val(state.search.search);
+        }
+    },
     createdRow: function (row, data, dataIndex) {
 
     }
