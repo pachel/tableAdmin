@@ -181,6 +181,9 @@ class TableAdmin
             if (!isset($col["alias"])) {
                 $col["alias"] = $col["name"];
             }
+            if (!isset($col["text"])) {
+                $col["text"] = $col["alias"];
+            }
             if (!isset($col["visible"])) {
                 $col["visible"] = true;
             }
@@ -664,7 +667,7 @@ class TableAdmin
     public $javascript = "";
     /**
      * @param bool $show ha nem akarjuk a táblázatot megjeleníteni
-     * @return void
+     * @return void|array
      * @throws \Exception
      */
     public function show($show = true)
@@ -685,15 +688,12 @@ class TableAdmin
                     while (ob_get_level() > 0) {
                         ob_end_clean();
                     }
-                    header('Content-Type: application/json; charset=utf-8');
-                    $this->ajaxRequest();
-                    return;
+                    //header('Content-Type: application/json; charset=utf-8');
+                    return $this->ajaxRequest();
+
                 }
-
                 require __DIR__ . "/../tpls/generateJsTable.php";
-
                 ob_start();
-
                 require __DIR__ . "/../tpls/datatable.ajax.js.php";
                 $this->javascript = ob_get_clean();
 
@@ -741,12 +741,12 @@ class TableAdmin
             }
         }
 
-        echo json_encode([
+        return [
             "draw" => $draw,
             "recordsTotal" => $all,
             "recordsFiltered" => $filtered,
             "data" => $data
-        ]);
+        ];
     }
 
     /**
