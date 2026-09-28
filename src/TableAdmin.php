@@ -687,7 +687,7 @@ class TableAdmin
                     }
                     header('Content-Type: application/json; charset=utf-8');
                     $this->ajaxRequest();
-                    exit();
+                    return;
                 }
 
                 require __DIR__ . "/../tpls/generateJsTable.php";
@@ -766,7 +766,7 @@ class TableAdmin
     }
     public function getUrl()
     {
-        return $this->config["url"];
+        return preg_replace("/[\?]$/","",$this->config["url"]);
     }
     private function setAjaxSearch()
     {
@@ -775,7 +775,9 @@ class TableAdmin
 
         if(isset($_POST["first"])){
             $post = $_POST;
+            //file_put_contents(TMP_DIR."ta_.log","TA1\n".$name."\n",FILE_APPEND);
             Session::set($name, $_POST);
+            //file_put_contents(TMP_DIR."ta_.log","TA2\n".$name."\n",FILE_APPEND);
         }
         else{
             $this->sql_query = str_replace("/*WHERE*/",Session::get($name_where),$this->sql_query);
