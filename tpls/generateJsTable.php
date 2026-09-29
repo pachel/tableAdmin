@@ -4,6 +4,9 @@
  */
 
 ?>
+<?php if(isset($this->config["addButton"]) && ($this->config["addButton"] || is_array($this->config["addButton"]))):?>
+    <a href="<?=$this->config["url"].(preg_match("/\?/",$this->config["url"])?"&":"?")."ta_method=add&key=".$this->key?>" class="ta-uj-sor"><?=(is_array($this->config["addButton"])?$this->config["addButton"][1]:(is_string($this->config["addButton"])?$this->config["addButton"]:"Új sor hozzáadása"))?></a>
+<?php endif;?>
 <table id="datatables" class="<?=(isset($this->config["tableClass"])?$this->config["tableClass"]:"table table-bordered table-striped display")?>">
     <thead>
     <tr>
