@@ -184,6 +184,9 @@ class TableAdmin
             if (!isset($col["visible"])) {
                 $col["visible"] = true;
             }
+            if (!isset($col["text"])) {
+                $col["text"] = $col["alias"];
+            }
             /**
              * Csekkoljuk a string opciót
              */
@@ -686,7 +689,7 @@ class TableAdmin
                         ob_end_clean();
                     }
                     header('Content-Type: application/json; charset=utf-8');
-                    $this->ajaxRequest();
+                    return $this->ajaxRequest();
                     return;
                 }
 
@@ -741,12 +744,12 @@ class TableAdmin
             }
         }
 
-        echo json_encode([
+        return [
             "draw" => $draw,
             "recordsTotal" => $all,
             "recordsFiltered" => $filtered,
             "data" => $data
-        ]);
+        ];
     }
 
     /**
@@ -790,7 +793,7 @@ class TableAdmin
             $where .= " ".$this->sqlWhereFromOutSearch($post["ta_extra"]);
         }
         if(!empty($searchValue)) {
-            $where .= " AND ".sqlWhereFromSearchText($searchValue, $this->columns->getColumnNames());
+            $where .= " AND ".sqlWhereFromSearchText2($searchValue, $this->columns->getColumnNames());
         }
         if(isset($post["first"])){
             Session::set($name_where, $where);
