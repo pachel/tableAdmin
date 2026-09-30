@@ -16,7 +16,10 @@ namespace pachel;
 
 use http\Url;
 use Pachel\Functions\Session;
+use Pachel\TableAdmin\Models\Button;
+use Pachel\TableAdmin\Models\Buttons;
 use Pachel\TableAdmin\Models\columns;
+use Pachel\TableAdmin\Models\Config;
 
 class TableAdmin
 {
@@ -26,6 +29,10 @@ class TableAdmin
      * @var type
      */
     private $config = [];
+    /**
+     * @var Config $_Config
+     */
+    public static $_Config;
 
     /**
      * Legenerált SQL QUERY a konfigból
@@ -59,6 +66,10 @@ class TableAdmin
     private $onlyFormCols = [];
     private $onlyCols = [];
     private $array = false;
+    /**
+     * @var Buttons $Buttons
+     */
+    public $Buttons;
 
     /**
      *
@@ -86,6 +97,16 @@ class TableAdmin
      * @var columns $columns
      */
     private $columns;
+    public function getConfig()
+    {
+        return $this->config;
+    }
+    public function generateButtonsNew()
+    {
+        $row = new \stdClass();
+        $row->id = 1;
+        $this->Buttons->generateButtonsHTML($row);
+    }
 
     /**
      *
@@ -111,8 +132,21 @@ class TableAdmin
             $this->array = true;
         }
         $this->columns = new columns();
+
     }
 
+    /**
+     * @param Button $button
+     * @return Button
+     */
+    public function addButtons($button)
+    {
+        return $this->Buttons->add($button);
+    }
+    public function printButtons()
+    {
+        $this->Buttons->printButtons();
+    }
     /**
      *
      * @return type
@@ -139,6 +173,7 @@ class TableAdmin
 
     public function addVariable($name, $value)
     {
+        self::$_Config->addVariable($name, $value);
         $this->_variables[$name] = $value;
     }
 
@@ -156,6 +191,7 @@ class TableAdmin
         $string = str_replace($search,$replace,$string);
         return $string;
     }
+
     /**
      *
      * @param type $config
@@ -173,6 +209,10 @@ class TableAdmin
                 throw new \Exception(error(1));
             }
         }
+
+        self::$_Config = new Config($config);
+        $this->Buttons = new Buttons($this->db);
+
         if(!isset($this->config["ajax"]) || !is_bool($this->config["ajax"])){
             $this->config["ajax"] = false;
         }

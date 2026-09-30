@@ -2,6 +2,7 @@
     "name": "pachel/tableadmin",
     "description": "Table content editor",
     "require": {
+
         "pachel/dbclass": "dev-master",
         "pachel/functions": "^1.1.7"
     },
