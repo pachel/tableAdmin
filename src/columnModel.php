@@ -1,12 +1,43 @@
 <?php
 
 namespace Pachel\TableAdmin\Models;
+use pachel\TableAdmin;
+
 class columns
 {
     /**
      * @var columnModel[] $columns
      */
     private $columns = [];
+    /**
+     * @var Config $_config
+     */
+    private $_config;
+
+    /**
+     * @param Config $_config
+     */
+    public function __construct($_config)
+    {
+        $cols =  $_config->getCols();
+        foreach ($cols as $col) {
+            $this->add($col);
+
+            if (!isset($col->alias)) {
+                $col->alias = $col->name;
+            }
+            if (!isset($col->visible)) {
+                $col->visible = true;
+            }
+            if (!isset($col->text)) {
+                $col->text = $col->alias;
+            }
+            /**
+            if (isset($col["string"])) {
+                $this->strings[$col["alias"]] = $col["string"];
+            }*/
+        }
+    }
 
     public function add($dataFromConfig)
     {
@@ -36,6 +67,14 @@ class columns
         return $ret;
     }
 
+
+    /**
+     * @return columnModel[]
+     */
+    public function getAllColumns()
+    {
+        return $this->columns;
+    }
     public function getColumnNames($onlyVisible = true)
     {
         $ret = [];
@@ -76,6 +115,7 @@ class columnModel
     public $name;
     public $text;
     public $alias;
+    public $searchable = true;
     public $visible = true;
     public $where = null;
 

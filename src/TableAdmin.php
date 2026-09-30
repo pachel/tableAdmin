@@ -20,6 +20,7 @@ use Pachel\TableAdmin\Models\Button;
 use Pachel\TableAdmin\Models\Buttons;
 use Pachel\TableAdmin\Models\columns;
 use Pachel\TableAdmin\Models\Config;
+use Pachel\TableAdmin\Models\ContentGenerator;
 
 class TableAdmin
 {
@@ -39,6 +40,8 @@ class TableAdmin
      * @var type
      */
     private $sql_query = "";
+
+    private $_get = null;
 
     /**
      * pachel/dbClass object
@@ -101,11 +104,14 @@ class TableAdmin
     {
         return $this->config;
     }
+    public static $_HTML;
+    public static $_JAVASCRIPT;
+
     public function generateButtonsNew()
     {
         $row = new \stdClass();
         $row->id = 1;
-        $this->Buttons->generateButtonsHTML($row);
+        //return self::$_Config->Buttons->generateButtonsHTML($row);
     }
 
     /**
@@ -117,9 +123,7 @@ class TableAdmin
         if ($db != null) {
             $this->db = &$db;
         }
-
         $this->keyfile = __DIR__ . "/../tmp/ta_key_" . md5($_SERVER["HTTP_HOST"] . $_SERVER["SCRIPT_FILENAME"] . session_id());
-
         if (!isset($_GET["ta_method"])) {
             $this->key = md5(time() . microtime());
             file_put_contents($this->keyfile, $this->key);
@@ -127,12 +131,6 @@ class TableAdmin
             $this->key = file_get_contents($this->keyfile);
         }
         $this->get = url();
-
-        if($this->db->settings()->getResultmode() == \Pachel\dbClass::DB_RESULT_TYPE_ARRAY){
-            $this->array = true;
-        }
-        $this->columns = new columns();
-
     }
 
     /**
@@ -141,49 +139,23 @@ class TableAdmin
      */
     public function addButtons($button)
     {
-        return $this->Buttons->add($button);
+        return self::$_Config->Buttons->add($button);
     }
     public function printButtons()
     {
-        $this->Buttons->printButtons();
-    }
-    /**
-     *
-     * @return type
-     */
-    public static function instance()
-    {
-        if (empty(self::$self)) {
-            $ref = new \Reflectionclass("pachel\TableAdmin");
-            $args = func_get_args();
-            self::$self = ($args ? $ref->newinstanceargs($args) : new TableAdmin());
-        }
-        return self::$self;
-    }
-
-    private function setBaseUrl()
-    {
-        $this->config["url_full"] = $_SERVER["REQUEST_SCHEME"] . "://" . $_SERVER["SERVER_NAME"] . (isset($_SERVER["REDIRECT_URL"])?$_SERVER["REDIRECT_URL"]:"");
-
-        if($_SERVER["HTTP_HOST"] == "localhost") {
-            $this->config["url_full"] = str_replace("index.php", "", $this->config["url_full"]) . $this->config["url"];
-        }
-
+        self::$_Config->Buttons->printButtons();
     }
 
     public function addVariable($name, $value)
     {
         self::$_Config->addVariable($name, $value);
-        $this->_variables[$name] = $value;
     }
 
     private function replaceVariable($string)
     {
-
         if(!is_array($this->_variables) || empty($this->_variables)){
             return $string;
         }
-
         foreach ($this->_variables AS $varname => $value){
             $search[] = "{{".$varname."}}";
             $replace[] = $value;
@@ -210,33 +182,20 @@ class TableAdmin
             }
         }
 
-        self::$_Config = new Config($config);
-        $this->Buttons = new Buttons($this->db);
+        self::$_Config = Config::instance($config,$this->db);
+        $this->_get = url();
+        /*
+        //$this->Buttons = new Buttons($this->db);
+        //$this->columns = new columns();
 
         if(!isset($this->config["ajax"]) || !is_bool($this->config["ajax"])){
             $this->config["ajax"] = false;
         }
-        foreach ($this->config["cols"] as &$col) {
-            $this->columns->add($col);
-            if (!isset($col["alias"])) {
-                $col["alias"] = $col["name"];
-            }
-            if (!isset($col["visible"])) {
-                $col["visible"] = true;
-            }
-            if (!isset($col["text"])) {
-                $col["text"] = $col["alias"];
-            }
-            /**
-             * Csekkoljuk a string opciót
-             */
-            if (isset($col["string"])) {
-                $this->strings[$col["alias"]] = $col["string"];
-            }
-        }
+
+
         if (isset($this->config["keycheck"]) && !$this->config["keycheck"]) {
             $this->keyCheck = false;
-        }
+        }*/
     }
 
     private function runActions()
@@ -465,33 +424,7 @@ class TableAdmin
 
     }
 
-    /**
-     *
-     * @param type object
-     * @param type string delete|edit
-     * @return type
-     */
-    public function addMethodToButtonsIfVisible($method, $button/* delete|edit */)
-    {
-        if (gettype($method) != "object") {
-            return;
-        }
-        $this->methods[$button][] = $method;
-    }
 
-    /**
-     *
-     * @param type $method
-     * @param type $button
-     * @return type
-     */
-    public function addButtonActionMethod($button, $method)
-    {
-        if (gettype($method) != "object") {
-            return;
-        }
-        $this->buttonActionMethods[$button] = $method;
-    }
 
     public function addMethodToTRClass($method)
     {
@@ -528,30 +461,6 @@ class TableAdmin
         }
     }
 
-    /**
-     * @param $name
-     * @param $text
-     * @param object|string $action method vagy link
-     * @param $link_target
-     * @param $link
-     * @param $onclick
-     * @return void
-     */
-    public function addButton($name, $text, $action = NULL, $link_target = "_self", $link = null, $onclick = null)
-    {
-
-        if (!empty($action) && gettype($action) == "object") {
-            $this->addButtonActionMethod($name, $action);
-            //$this->buttonMethods[$name] = $action;
-        }
-        elseif (is_string($action) ){
-            $link = $action;
-        }
-        if ($name != "delete" && $name != "edit" && $name != "add") {
-            $this->buttons[] = ["name" => $name, "text" => $text, "target" => $link_target, "link" => $link, "onclick" => $onclick];
-            $this->custom_buttons++;
-        }
-    }
 
     private function runMethods($button, $row)
     {
@@ -715,9 +624,16 @@ class TableAdmin
         if (empty($this->config)) {
             throw new \Exception(error(0));
         }
-        $this->setBaseUrl();
-        $this->checkFormConfig();
-        $this->runActions();
+        if(!self::$_Config->Buttons->runActions()){
+            $content = new ContentGenerator($this->db);
+            $content->table();
+        }
+
+
+
+        return;
+        exit();
+        //$this->runActions();
         $this->replaceAllVariables();
         if (!isset($this->get["ta_method"])) {
             if(!$show){

@@ -14,7 +14,6 @@ if(is_object($result)){
     <?php foreach ($this->config["form"] AS $row): ?>
         <div class="row">
             <?php foreach ($row AS $col):
-
                 if ($col["type"] == "hidden"):
                     ?>
                     <input type="hidden" id="ta_form_<?= $col["name"] ?>" name="<?= $col["name"] ?>" value="<?= (isset($col["value"]) ? $col["value"] : (isset($result[$col["name"]]) ? $result[$col["name"]]:"")) ?>">
