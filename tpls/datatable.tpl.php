@@ -8,7 +8,8 @@ if (!empty($add)) {
     echo $add;
 }
 ?>
-<table id="datatables" class="table table-bordered table-striped display" style="width: 100%">
+
+<table id="datatables" class="<?=$this->_config->getClasses()?>" style="width: 100%;margin-top: 20px;">
     <thead>
     <tr>
         <?php

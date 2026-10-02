@@ -4,6 +4,10 @@ namespace Pachel\TableAdmin\Models;
 
 
 use Pachel\dbClass;
+use pachel\TableAdmin;
+use Pachel\TableAdmin\Traits\propertyFromArray;
+use function pachel\error;
+
 
 class Config
 {
@@ -20,6 +24,10 @@ class Config
      */
     public $Buttons;
     /**
+     * @var Fields $Fields
+     */
+    public $Fields;
+    /**
      * @var columns $Cols
      */
     public $Cols;
@@ -31,30 +39,82 @@ class Config
      * @var
      */
     public $_get;
-    public function __construct($file,$db)
+    private $_variables = [];
+
+    public function __construct($file, $db)
     {
         $this->_db = $db;
         if (!is_null($file)) {
             $this->addConfigFile($file);
         }
-        $this->Buttons = new Buttons($this->_db,$this);
+        $this->Buttons = new Buttons($this->_db, $this);
         $this->Cols = new columns($this);
-        $this->SqlQuery = new SqlQuery($this);
+
+
+        $this->Fields = new Fields($this->_db, $this);
         $this->_setBaseUrl();
         $this->_get = new get();
     }
+
+    public function isAjax()
+    {
+        return (isset($this->_config->ajax) && $this->_config->ajax ? true : false);
+    }
+
+    public function initSqlQueries()
+    {
+        $this->SqlQuery = new SqlQuery($this);
+    }
+
     private function _setBaseUrl()
     {
-        $this->_config->baseUrl = $_SERVER["REQUEST_SCHEME"] . "://" . $_SERVER["SERVER_NAME"] . (isset($_SERVER["REDIRECT_URL"])?$_SERVER["REDIRECT_URL"]:"");
+        //$this->_config->baseUrl = $_SERVER["REQUEST_SCHEME"] . "://" . $_SERVER["SERVER_NAME"] . (isset($_SERVER["REDIRECT_URL"])?$_SERVER["REDIRECT_URL"]:"");
+        $base = $this->_getBaseUrl();
+        $path = '/' . ltrim($this->getUrl(), '/');
+
+        $this->_config->baseUrl = $base . $path;
+
+        /*
         if($_SERVER["HTTP_HOST"] == "localhost") {
-            $this->config["url_full"] = str_replace("index.php", "", $this->config["url_full"]) . $this->config["url"];
-        }
+            //$this->_config->url_full = str_replace("index.php", "", $this->_config->url_full) . $this->_config->url;
+            $this->_config->BaseUrl = $this->_setFullUrl();
+        }*/
     }
+
+    private function _getBaseUrl(bool $withProtocolAndHost = true): string
+    {
+        // 1. Protokoll meghatározása (http vagy https, figyelembe véve a proxykat is)
+        $isHttps = (
+            (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+            (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ||
+            (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+        );
+        $protocol = $isHttps ? 'https://' : 'http://';
+
+        // 2. Host (domain vagy localhost + port, ha van)
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+        // 3. Az almappa útvonalának kiszámítása a belépési pont (pl. index.php) alapján
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+        $basePath = str_replace('\\', '/', dirname($scriptName));
+
+        // Levágjuk a felesleges lezáró perjelet, ha van (kivéve ha sima "/" lenne)
+        $basePath = rtrim($basePath, '/');
+
+        if (!$withProtocolAndHost) {
+            return $basePath; // Csak a relatív útvonal: pl. "/ksjdalk"
+        }
+
+        return $protocol . $host . $basePath;
+    }
+
     public function getBaseUrl()
     {
         return $this->_config->baseUrl;
     }
+
     private static $instances;
+
     public static function instance(...$args)
     {
         $class = static::class;
@@ -67,18 +127,22 @@ class Config
         }
         return self::$instances[$class];
     }
+
     public function getTables()
     {
         return $this->_config->tables;
     }
+
     public function getLast()
     {
         return $this->_config->last;
     }
+
     public function getWhere()
     {
         return $this->_config->where;
     }
+
     /**
      * @return columnModel[]
      */
@@ -98,13 +162,15 @@ class Config
 
     public function isEditable()
     {
+        if (isset($this->_config->form) && !empty($this->_config->form))
+            return true;
 
-        return true;
+        return false;
     }
 
     public function addConfigFile($file)
     {
-        $this->_config = new ConfigData(json_decode(file_get_contents($file)));
+        $this->_config = new ConfigData($file);
     }
 
     public function hasForm()
@@ -123,24 +189,52 @@ class Config
         $list = $this->formGetFields();
         $ret = [];
         foreach ($list as $field) {
-            if(!$field->readonly){
+            if (!$field->readonly) {
                 $ret[] = $field;
             }
         }
         return $ret;
     }
+
+    public function loadFields()
+    {
+
+        $list = [];
+        //file_put_contents(__DIR__."/../tmp/log.log",print_r($this->_get,true)."\n",FILE_APPEND);
+        if (!$this->Fields->isEmpty()) {
+            return;
+        }
+
+        foreach ($this->_config->form->cols as $index => $field) {
+            if (is_array($field)) {
+                foreach ($field as $value) {
+                    $value->__row_number = $index;
+                    $this->Fields->add($value);
+                    //$list[] = new Field($value);
+                }
+            } else {
+                $field->__row_number = $index;
+                $this->Fields->add($field);
+                //$list[] = new Field($field);
+            }
+        }
+
+    }
+
     /**
      * @return Field[]
      */
     public function formGetFields()
     {
         $list = [];
-        foreach ($this->_config->form->cols as $field) {
+        foreach ($this->_config->form->cols as $index => $field) {
             if (is_array($field)) {
                 foreach ($field as $value) {
+                    $value->__row_number = $index;
                     $list[] = new Field($value);
                 }
             } else {
+                $field->__row_number = $index;
                 $list[] = new Field($field);
             }
         }
@@ -155,6 +249,7 @@ class Config
         }
         return $this->_config->form->table;
     }
+
     public function formGetId()
     {
         if (!$this->hasForm()) {
@@ -170,7 +265,72 @@ class Config
 
     public function addVariable($name, $value)
     {
-        $this->_config->variables[$name] = $value;
+        $this->_config->variables->{$name} = $value;
+    }
+
+    /**
+     * Kicseréli a szövegben az összes változót, arra ami a konfigban definiálva lett
+     * @param $string
+     * @return string
+     */
+    public function replaceVariables($string)
+    {
+
+        if (isset($this->_config->variables) && !empty($this->_config->variables)) {
+            foreach ($this->_config->variables as $name => $value) {
+                $string = str_replace("{" . $name . "}", $value, $string);
+            }
+        }
+        if (preg_match_all("/\{config\.(.+?)\}/i", $string, $matches)) {
+            foreach ($matches[1] as $index => $name) {
+                if (!isset($this->_config->{$name})) {
+                    continue;
+                }
+                $search[] = $matches[0][$index];
+                $replace[] = $this->_config->{$name};
+            }
+            if (!empty($replace)) {
+                $string = str_replace($search, $replace, $string);
+            }
+        }
+        return $string;
+    }
+
+    public function getVariable($name)
+    {
+        return $this->_config->variables[$name] ?? null;
+    }
+
+    public function getDatatables()
+    {
+        return (isset($this->_config->datatables) && !empty($this->_config->datatables) ? $this->_config->datatables : null);
+    }
+
+    public function appendConfig($config, $overwrite = true)
+    {
+        if (!is_array($config)) {
+            throw new \Exception(error(4));
+        }
+        $keys = array_keys($config);
+
+        if (is_array($keys)) {
+            foreach ($keys as $key) {
+                if ($overwrite) {
+                    $this->_config->{$key} = $config[$key];
+                } else {
+                    $this->_config->{$key} .= $config[$key];
+                }
+            }
+        }
+    }
+
+    public function getButtonTemplate()
+    {
+        return $this->_config->buttonTemplate;
+    }
+    public function getClasses()
+    {
+        return $this->_config->classes;
     }
 }
 
@@ -179,7 +339,11 @@ class Config
  * @property string $url
  * @property string[] $tables
  * @property bool $keyCheck
+ * @property bool $buttonTemplate
  * @property string $last
+ * @property bool $ajax
+ * @property string $classes
+ * @property bool $datatables
  * @property string $where
  * @property string $id id's name
  * @property bool $addButton
@@ -194,16 +358,52 @@ class ConfigData extends \stdClass
     private $_defaults = [
         "addButton" => true,
         "id" => "id",
-        "keyCheck"=>false,
-        "last"=>null,
-        "form"=>null,
-        "where"=>null,
+        "keyCheck" => false,
+        "last" => null,
+        "form" => null,
+        "ajax" => false,
+        "where" => null,
+        "classes" => "table table-bordered table-striped",
+        "buttonTemplate" => " [ {button} ] ",
     ];
 
-    public function __construct($data)
+    public function __construct($file)
     {
+        if (!file_exists($file)) {
+            throw new \Exception(error(1));
+        }
+        $data = json_decode(file_get_contents($file));
+        /**
+         * Ide betöltjük először azokat az adatokat, amiket kell
+         */
+        if (isset($data->load)) {
+            if (!is_array($data->load)) {
+                $data->load = [$data->load];
+            }
+            foreach ($data->load as $loadfile) {
+                $toload = dirname($file) . "/" . $loadfile;
+                if (!file_exists($toload)) {
+                    throw new \Exception(error(5));
+                } else {
+                    $data2 = json_decode(file_get_contents($toload));
+                    foreach ($data2 as $name => $value) {
+                        if (!isset($data->{$name})) {
+                            $data->{$name} = $value;
+                        } elseif (is_object($data->{$name}) && is_object($value)) {
+                            foreach ($value as $key => $value2) {
+                                $data->{$name}->{$key} = $value2;
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
         foreach ($data as $name => $value) {
             $this->{$name} = $value;
+        }
+        if(!isset($this->variables)){
+            $this->variables = new dbClass();
         }
         $this->setDefaults();
         /*
@@ -215,10 +415,11 @@ class ConfigData extends \stdClass
             }
         }*/
     }
+
     private function setDefaults()
     {
         foreach ($this->_defaults as $name => $value) {
-            if(!property_exists($this, $name)) {
+            if (!property_exists($this, $name)) {
                 $this->{$name} = $value;
             }
         }
@@ -239,44 +440,16 @@ class ConfigDataCol extends \stdClass
 }
 
 
-class Field extends \stdClass
-{
-    public $name;
-    public $text;
-    public $type = "text";
-    public $bt_num = null;
-    public $placeholder = null;
-    public $require = false;
-    public $classes = null;
-    public $alias = null;
-    public $readonly = false;
-    public $saveable = true;
-
-    public function __construct($data)
-    {
-        if (is_object($data)) {
-            foreach ($data as $key => $value) {
-                $this->{$key} = $value;
-            }
-            if (is_null($this->text)) {
-                $this->text = $this->name;
-            }
-            if (is_null($this->alias)) {
-                $this->alias = $this->name;
-            }
-        }
-    }
-}
-
 class get extends \stdClass
 {
     public $id;
     public $ta_method;
     public $refresh = 1;
+
     public function __construct()
     {
         $ar = url();
-        if(!empty($ar)){
+        if (!empty($ar)) {
             foreach ($ar as $key => $value) {
                 $this->{$key} = $value;
             }

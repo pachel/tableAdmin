@@ -28,7 +28,7 @@ class ContentGenerator
      */
     private function _commonForInput($row,$field)
     {
-        $text = ($field->readonly?"readonly ":"")."class=\"form-control".(!empty($field->classes)?$field->classes:"")."\" placeholder=\"".(!empty($field->placeholder)?$field->placeholder:"")."\" name=\"".$field->alias."\"".$this->_required($field);
+        $text = ($field->readonly?"readonly ":"")."class=\"form-control ".(!empty($field->classes)?$field->classes:"")."\" placeholder=\"".(!empty($field->placeholder)?$field->placeholder:"")."\" name=\"".$field->alias."\"".$this->_required($field);
         return $text;
     }
     /**
@@ -37,26 +37,36 @@ class ContentGenerator
      */
     private function _required($field)
     {
-        return ($field->require?" require":"");
+        return ($field->require?" required":"");
     }
     private function _value($row, $field)
     {
         return (isset($row[$field->alias])?$row[$field->alias]:"");
     }
+    private function _getAjaxUrl()
+    {
+        return $this->_config->getBaseUrl()."?".url("ta_method=ajax_api&refresh=0");
+    }
     public function editor($id = null)
     {
+        $this->_config->loadFields();
         if(is_numeric($id)) {
             $sql = $this->_config->SqlQuery->getEditorQuery();
-            $row = $this->_db->query($sql)->params($this->_config->_get->id)->line();
+            $row = $this->_db->query($sql)->params($id)->line();
             $row = (array)$row;
         }
         else{
             $row = [];
         }
-        $fields = $this->_config->formGetFields();
+        $this->_config->Fields->setFieldsData($row);
+        $fields = $this->_config->Fields->getFields();
         ob_start();
         include __DIR__."/../tpls/editForm.tpl.php";
         TableAdmin::$_HTML = ob_get_clean();
+
+        ob_start();
+        include __DIR__."/../tpls/editForm.js.tpl.php";
+        TableAdmin::$_JAVASCRIPT = ob_get_clean();
     }
 
     /**
@@ -76,6 +86,7 @@ class ContentGenerator
     private function _getDataForTables()
     {
         $sql = $this->_config->SqlQuery->getDefaultQuery();
+
         $rows = $this->_db->query($sql)->rows();
         $return = [];
         $visibleColumns = $this->_getVisibleColumns();
@@ -85,27 +96,39 @@ class ContentGenerator
             foreach($visibleColumns as $field){
                 $row2[$field->alias] = $row_a[$field->alias];
             }
-            $row2["ta_buttons"] = $this->_config->Buttons->generateButtonsHTML($row);
+            $row2["tb___buttons"] = $this->_config->Buttons->generateButtonsHTML($row);
             $return[] = $row2;
 
         }
 
         return $return;
     }
+
     private function _getLinkForNewForm()
     {
-        return $this->link = TableAdmin::$_Config->getBaseUrl() . "?" . url("ta_method=add&refresh=1");
+        if($this->_config->_get->ta_method == "add") {
+            return TableAdmin::$_Config->getBaseUrl() . "?" . url("ta_method=add&refresh=1");
+        }
+        return null;
     }
 
     public function table()
     {
-
-        $rows = $this->_getDataForTables();
         $headers = $this->_getVisibleColumns();
-        $headers[] = new columnModel(["text"=>"Műveletek","name"=>"ta_buttons"]);
+        if(!$this->_config->isAjax()) {
+            $rows = $this->_getDataForTables();
+        }
+        else{
+            $rows = null;
+        }
+        $headers[] = new columnModel(["text"=>"Műveletek","name"=>"tb___buttons"]);
         ob_start();
         include __DIR__."/../tpls/datatable.tpl.php";
         TableAdmin::$_HTML = ob_get_clean();
+
+        ob_start();
+        include __DIR__."/../tpls/datatable.js.tpl.php";
+        TableAdmin::$_JAVASCRIPT = ob_get_clean();
     }
 
     /**

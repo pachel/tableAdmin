@@ -1,12 +1,15 @@
 {
     "baseUrl" : "",    
     "url" : "szamlak.php",
-    "ajaxUrl" : "Penzugy/ajax",
     "tables": ["p_szamlak AS sz"],
-    "keycheck": false,
-    "last": "ORDER BY sz.hatarido DESC LIMIT 50",
+    "load": "toload.json",
+    "where": "id_tulaj=1",
     "id": "id",
-    "addButton": true,
+    "ajax": true,
+    "variables": {
+        "fizetve": 3,
+        "egyenleg": 4654
+    },
     "cols": [
         {
             "name": "id",
@@ -18,12 +21,6 @@
             "name": "id_szamlak",
             "text": "ID",
             "alias": "id_szamlak",
-            "visible": false
-        },
-        {
-            "name": "(SELECT COUNT(*) FROM p_szamlak sz2 WHERE sz2.sorszam=sz.sorszam AND sz2.id_cegek=sz.id_tulaj AND sz2.id_tulaj=sz.id_cegek AND sz2.statusz>0 AND sz2.kibe='B' AND sz2.osszeg_netto IS NOT NULL)",
-            "text": "ID",
-            "alias": "ellenszamla",
             "visible": false
         },
         {
@@ -138,169 +135,173 @@
         }
 
     ],
-    "formTable": "p_szamlak",
-    "form": [
-        [
-
-            {
-                "name": "sorszam",
-                "text": "Sorszám",
-                "type": "text",
-                "required": true,
-                "bt_num": 2
-            },
-            {
-                "name": "kibe",
-                "text": "Ki/Be",
-                "type": "select",
-                "bt_num": 2,
-                "data" : [
-                    {
-                        "value" : "K",
-                        "text" : "Kimenő számla"
-                    },
-                    {
-                        "value" : "B",
-                        "text" : "Bejövő számla"
-                    }
-                ]
-            },
-            {
-                "name": "osszeg_netto",
-                "text": "Nettó összeg",
-                "type": "text",
-                "bt_num": 3
-            },
-            {
-                "name": "osszeg_brutto",
-                "text": "Bruttó összeg",
-                "type": "text",
-                "bt_num": 3
-            },
-            {
-                "name": "id_deviza",
-                "text": "Deviza",
-                "type": "select",
-                "data": [{
-                    "text": "HUF",
-                    "value": 2
-                }],
-                "sqlData": "SELECT id AS value,nev AS text FROM p_devizak",
-                "bt_num": 2
-            }
-        ],
-        [
-            {
-                "name": "id_cegek",
-                "text": "Partner",
-                "type": "select",
-                "bt_num" : 4,
-                "sqlData" : "SELECT id AS value,nev AS text FROM p_cegek ORDER BY nev"
-            },
-            {
-                "name": "statusz",
-                "text": "Státusz",
-                "type": "select",
-                "bt_num" : 2,
-                "data": [
-                    {
-                        "text": "Törölt",
-                        "value": 0
-                    },
-                    {
-                        "text": "Befogadott",
-                        "value": 1,
-                        "default": true
-                    },
-                    {
-                        "text": "Fizethető",
-                        "value": 2
-                    },
-                    {
-                        "text": "Kiegyenlített",
-                        "value": 3
-                    }
-                ]
-            },
-            {
-                "name": "id_szamla_tipusok",
-                "text": "Tipus",
-                "type": "select",
-                "bt_num" : 2,
-                "sqlData" : "SELECT id AS value,nev AS text FROM p_szamla_tipusok WHERE statusz=1 ORDER BY nev"
-            },
-            {
-                "name": "id_koltseg_tipusok",
-                "text": "PROF.CENT",
-                "type": "select",
-                "bt_num" : 2,
-                "sqlData" : "SELECT id AS value,nev AS text FROM p_koltseg_tipusok WHERE statusz=1 ORDER BY nev"
-            },
-            {
-                "name": "id_fizetes_tipusok",
-                "text": "FIZ.MOD",
-                "type": "select",
-                "bt_num" : 2,
-                "sqlData" : "SELECT id AS value,nev AS text FROM p_fizetes_tipusok  WHERE statusz=1 ORDER BY nev"
-            }
-        ],
-        [
-            {
-                "name" : "kiallitas",
-                "text" : "Kelt",
-                "type" : "date"
-            },
-            {
-                "name" : "teljesites",
-                "text" : "Teljesítés",
-                "type" : "date"
-            },
-            {
-                "name" : "beerkezes",
-                "text" : "Beérkezés",
-                "type" : "date"
-            },
-            {
-                "name" : "hatarido",
-                "text" : "Határidő",
-                "type" : "date"
-            },
-            {
-                "name" : "verk_id",
-                "text" : "VERK ID",
-                "type" : "text"
-            },
-            {
-                "name": "id_szamlak",
-                "text": "Számla (részletfizetéshez)",
-                "type": "select2",
-                "sqlData": "SELECT sz.id AS value,CONCAT(sorszam,' - ',c.nev) AS text FROM p_szamlak sz,p_cegek c WHERE c.id=sz.id_cegek AND sz.id_szamlak=0 AND sz.statusz=1",
-                "bt_num": 3
-            }
-        ],
-        [
-            {
-                "name": "penztaros",
-                "text": "Pénztáros (KP)",
-                "type": "text"
-            },
-            {
-                "name": "kartya_tulaj",
-                "text": "Kártya tulaj/KP felvevő",
-                "type": "text"
-            },
-            {
-                "name": "tev",
-                "text": "TEV",
-                "type": "text"
-            }
-        ],
-        [
-            {
-                "name": "megjegyzes",
-                "text": "Megjegyzés",
-                "type": "textarea"
-            }
+    "form": {
+        "table":"p_szamlak",
+        "id":"id",
+        "cols": [
+            [
+                {
+                    "name": "sorszam",
+                    "text": "Sorszám",
+                    "type": "text",
+                    "required": true,
+                    "bt_num": 2
+                },
+                {
+                    "name": "kibe",
+                    "text": "Ki/Be",
+                    "type": "select",
+                    "bt_num": 2,
+                    "data": [
+                        {
+                            "value": "K",
+                            "text": "Kimenő számla"
+                        },
+                        {
+                            "value": "B",
+                            "text": "Bejövő számla"
+                        }
+                    ]
+                },
+                {
+                    "name": "osszeg_netto",
+                    "text": "Nettó összeg",
+                    "type": "text",
+                    "bt_num": 3
+                },
+                {
+                    "name": "osszeg_brutto",
+                    "text": "Bruttó összeg",
+                    "type": "text",
+                    "bt_num": 3
+                },
+                {
+                    "name": "id_deviza",
+                    "text": "Deviza",
+                    "type": "select",
+                    "data": [
+                        {
+                            "text": "HUF",
+                            "value": 2
+                        }
+                    ],
+                    "sqlData": "SELECT id AS value,nev AS text FROM p_devizak",
+                    "bt_num": 2
+                }
+            ],
+            [
+                {
+                    "name": "id_cegek",
+                    "text": "Partner",
+                    "type": "select",
+                    "bt_num": 4,
+                    "sqlData": "SELECT id AS value,nev AS text FROM p_cegek ORDER BY nev"
+                },
+                {
+                    "name": "statusz",
+                    "text": "Státusz",
+                    "type": "select",
+                    "bt_num": 2,
+                    "data": [
+                        {
+                            "text": "Törölt",
+                            "value": 0
+                        },
+                        {
+                            "text": "Befogadott",
+                            "value": 1,
+                            "default": true
+                        },
+                        {
+                            "text": "Fizethető",
+                            "value": 2
+                        },
+                        {
+                            "text": "Kiegyenlített",
+                            "value": 3
+                        }
+                    ]
+                },
+                {
+                    "name": "id_szamla_tipusok",
+                    "text": "Tipus",
+                    "type": "select",
+                    "bt_num": 2,
+                    "sqlData": "SELECT id AS value,nev AS text FROM p_szamla_tipusok WHERE statusz=1 ORDER BY nev"
+                },
+                {
+                    "name": "id_koltseg_tipusok",
+                    "text": "PROF.CENT",
+                    "type": "select",
+                    "bt_num": 2,
+                    "sqlData": "SELECT id AS value,nev AS text FROM p_koltseg_tipusok WHERE statusz=1 ORDER BY nev"
+                },
+                {
+                    "name": "id_fizetes_tipusok",
+                    "text": "FIZ.MOD",
+                    "type": "select",
+                    "bt_num": 2,
+                    "sqlData": "SELECT id AS value,nev AS text FROM p_fizetes_tipusok  WHERE statusz=1 ORDER BY nev"
+                }
+            ],
+            [
+                {
+                    "name": "kiallitas",
+                    "text": "Kelt",
+                    "type": "date"
+                },
+                {
+                    "name": "teljesites",
+                    "text": "Teljesítés",
+                    "type": "date"
+                },
+                {
+                    "name": "beerkezes",
+                    "text": "Beérkezés",
+                    "type": "date"
+                },
+                {
+                    "name": "hatarido",
+                    "text": "Határidő",
+                    "type": "date"
+                },
+                {
+                    "name": "verk_id",
+                    "text": "VERK ID",
+                    "type": "text"
+                },
+                {
+                    "name": "id_szamlak",
+                    "text": "Számla (részletfizetéshez)",
+                    "type": "select2",
+                    "sqlData": "SELECT sz.id AS value,CONCAT(sorszam,' - ',c.nev) AS text FROM p_szamlak sz,p_cegek c WHERE c.id=sz.id_cegek AND sz.id_szamlak=0 AND sz.statusz=1",
+                    "bt_num": 3
+                }
+            ],
+            [
+                {
+                    "name": "penztaros",
+                    "text": "Pénztáros (KP)",
+                    "type": "text"
+                },
+                {
+                    "name": "kartya_tulaj",
+                    "text": "Kártya tulaj/KP felvevő",
+                    "type": "text"
+                },
+                {
+                    "name": "tev",
+                    "text": "TEV",
+                    "type": "text"
+                }
+            ],
+            [
+                {
+                    "name": "megjegyzes",
+                    "text": "Megjegyzés",
+                    "type": "textarea"
+                }
+            ]
         ]
-    ]
+    }
 }

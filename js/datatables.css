@@ -1,3 +1,26 @@
+:root {
+  --blue: #3366ff;
+  --indigo: #5b47fb;
+  --purple: #6f42c1;
+  --pink: #f10075;
+  --red: #dc3545;
+  --orange: #fd7e14;
+  --yellow: #ffc107;
+  --green: #3bb001;
+  --teal: #00cccc;
+  --cyan: #17a2b8;
+  --white: #fff;
+  --gray: #7987a1;
+  --gray-dark: #3b4863;
+  --primary: #3366ff;
+  --secondary: #7987a1;
+  --success: #3bb001;
+  --info: #17a2b8;
+  --warning: #ffc107;
+  --danger: #dc3545;
+  --light: #f4f5f8;
+  --dark: #3b4863;
+}
 /*
  * This combined file was created by the DataTables downloader builder:
  *   https://datatables.net/download
@@ -854,5 +877,157 @@ a.dt-button.processing:after {
   -webkit-animation: dtb-spinner 1500ms infinite linear;
   -moz-animation: dtb-spinner 1500ms infinite linear;
 }
+/* =========================================================
+   1. Wrapper és Táblázat struktúra
+   ========================================================= */
+.dataTables_wrapper {
+  position: relative;
+  width: 100% !important;
+  display: block !important;
+  clear: both;
+  font-family: inherit;
+  color: var(--gray-dark, #3b4863);
+}
+
+/* Clearfix: a lebegtetett felső és alsó elemeket lezárja */
+.dataTables_wrapper::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+/* Táblázat: kötelezően teljes szélesség és külön tiszta sáv */
+.dataTables_wrapper table.dataTable {
+  width: 100% !important;
+  display: table !important;
+  clear: both !important;
+  margin: 1rem 0 !important;
+}
+
+/* =========================================================
+   2. FELSŐ SÁV (Sorválasztó balra, Kereső jobbra)
+   ========================================================= */
+/* Sorhossz-választó balra lebegtetve */
+.dataTables_wrapper .dataTables_length {
+  float: left !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin-bottom: 0.75rem !important;
+  font-size: 0.9rem;
+  color: var(--gray, #7987a1);
+}
+
+.dataTables_wrapper .dataTables_length select {
+  border: 1px solid color-mix(in srgb, var(--gray) 35%, transparent);
+  border-radius: 0.375rem;
+  padding: 0.35rem 1.5rem 0.35rem 0.65rem;
+  background-color: var(--white, #fff);
+  color: var(--gray-dark, #3b4863);
+  outline: none;
+}
+
+.dataTables_wrapper .dataTables_length select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* Keresőmező jobbra lebegtetve */
+.dataTables_wrapper .dataTables_filter {
+  float: right !important;
+  text-align: right !important;
+  display: flex !important;
+  align-items: center !important;
+  margin-bottom: 0.75rem !important;
+  font-size: 0.9rem;
+  color: var(--gray, #7987a1);
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  border: 1px solid color-mix(in srgb, var(--gray) 35%, transparent);
+  border-radius: 0.375rem;
+  padding: 0.4rem 0.75rem;
+  margin-left: 0.5rem;
+  outline: none;
+  background-color: var(--white, #fff);
+  color: var(--gray-dark, #3b4863);
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* =========================================================
+   3. ALSÓ SÁV (Infó balra lenn, Lapozó jobbra lenn)
+   ========================================================= */
+/* A clear: both kényszeríti, hogy a táblázat UTÁN jelenjen meg! */
+.dataTables_wrapper .dataTables_info {
+  clear: both !important;
+  float: left !important;
+  padding-top: 0.75rem !important;
+  margin: 0 !important;
+  font-size: 0.875rem;
+  color: var(--gray, #7987a1);
+}
+
+.dataTables_wrapper .dataTables_paginate {
+  float: right !important;
+  text-align: right !important;
+  padding-top: 0.5rem !important;
+  margin: 0 !important;
+}
+
+/* Lapozógombok formázása */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  display: inline-block;
+  min-width: 2.25rem;
+  padding: 0.35rem 0.65rem !important;
+  margin: 0 2px !important;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  border-radius: 0.375rem !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: var(--gray-dark, #3b4863) !important;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled) {
+  background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+  color: var(--primary) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  background: var(--primary) !important;
+  color: var(--white, #fff) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 2px 4px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+  color: color-mix(in srgb, var(--gray) 50%, transparent) !important;
+  cursor: not-allowed;
+  background: transparent !important;
+  box-shadow: none;
+}
 
 
+/* Szerveroldali töltésjelző (Processing box) */
+.dataTables_wrapper .dataTables_processing {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 1000 !important;
+  background: var(--white, #fff) !important;
+  color: var(--primary) !important;
+  border: 1px solid color-mix(in srgb, var(--gray) 25%, transparent) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 0.375rem;
+  padding: 0.75rem 1.5rem;
+}

@@ -3,7 +3,7 @@
     "description": "Table content editor",
     "require": {
 
-        "pachel/dbclass": "dev-master",
+        "pachel/dbclass": "^1.6",
         "pachel/functions": "^1.1.7"
     },
     "autoload": {      

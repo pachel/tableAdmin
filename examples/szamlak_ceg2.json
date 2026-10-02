@@ -1,0 +1,4 @@
+{
+  "load": ["szamlak.json","toload.json"],
+  "where": "id_tulaj=2"
+}

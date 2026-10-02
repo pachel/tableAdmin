@@ -8,9 +8,10 @@
 namespace pachel;
 
 use Pachel\TableAdmin\Models\Button;
+use Pachel\TableAdmin\Models\Buttons;
 
 session_start();
-//ob_start();
+ob_start();
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
 
@@ -20,6 +21,7 @@ ini_set("display_errors", 1);
     <title></title>
     <link rel="stylesheet" href="../vendor/twbs/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="../vendor/datatables/datatables/media/css/jquery.dataTables.min.css"/>
+    <link rel="stylesheet" href="../js/datatables.min.css"/>
     <script type="text/javascript" src="../vendor/components/jquery/jquery.min.js"></script>
 
     <style>
@@ -43,28 +45,29 @@ ini_set("display_errors", 1);
         "password" => "ttr2"
     ]);
     $tdadmin = new TableAdmin($db);
-    $tdadmin->loadConfig(__DIR__ . "/szamlak.json");
-    $cegek = $db->fromDatabase("SELECT id AS value,nev AS text FROM p_cegek WHERE statusz=1 ORDER BY nev ASC");
-    $d["form"][1][0]["data"] = $cegek;
-    $tdadmin->appendConfig($d);
-    $tdadmin->addMethodToTRClass(function ($row) {
-        if ($row["egyenleg"] < 0) {
-            return "nemfizetve";
-        }
-    });
-    $tdadmin->addButtons(new Button("add"))->setText("Új számla hozzáadása")->addClass("btn btn-primary");
-    //$tdadmin->checkAjaxRequest();
-    $tdadmin->addButtons(new Button("delete"))->setText("Törlés")->addAction(function($id){
+    $tdadmin->loadConfig(__DIR__ . "/szamlak_ceg2.json");
+    $tdadmin->addButton(new Button("add"))->setText("Új számla hozzáadása")->addClass("btn btn-primary");
+    $tdadmin->addButton(new Button("delete"))->addAction(function($id){
 
-    },Button::$RUN_WITHOUT_DEFAULT_ACTION)->setIsVisible(function ($row){
+    },Buttons::$ACTION_RUN_WITHOUT_DEFAULT);
+    $tdadmin->addButton("teszt")->setLink("{config.baseUrl}?link{teszt} {fizetve} {egyenleg} id:%id% id:{row.id} {city}");
+    $tdadmin->addVariable("teszt",1);
 
-    })->addClass("btn btn-success");
-    $tdadmin->show();
+    $tdadmin->show(false);
+
+    if($tdadmin->isAjax() && !empty(TableAdmin::$_JSON)){
+        ob_end_clean();
+        echo TableAdmin::$_JSON;
+        exit();
+    }
+    echo TableAdmin::$_HTML;
     ?>
 
 </div>
 <script type="text/javascript" src="../vendor/components/jquery/jquery.min.js"></script>
 <script type="text/javascript" src="../vendor/twbs/bootstrap/dist/js/bootstrap.min.js"></script>
-<?php $tdadmin->getJS()?>
+<script type="text/javascript" src="../js/datatables.min.js"></script>
+
+<?php echo TableAdmin::$_JAVASCRIPT;?>
 </body>
 </html>

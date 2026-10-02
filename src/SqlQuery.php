@@ -59,11 +59,11 @@ class SqlQuery
      */
     public function getRowQuery()
     {
-        return $this->_query_base." WHERE `" . $this->_config->getId() . "`=?";
+        return $this->_query_simple_base." WHERE `" . $this->_config->getId() . "`=?";
     }
     public function getEditorQuery()
     {
-        $fields = $this->_config->formGetFields();
+        $fields = $this->_config->Fields->getFields();
         $sql = "SELECT ";
         foreach ($fields as $index => $field){
             if($index>0){
@@ -73,13 +73,15 @@ class SqlQuery
         }
         $sql .= " FROM `".$this->_config->formGetTable()."`";
         $sql .= " WHERE `" . $this->_config->getId() . "`=?";
+
         return $sql;
     }
     private $_query_base="";
+    private $_query_simple_base="";
     private function setSelect()
     {
         $query = "SELECT /*START_CLMN*/ ";
-        $cols = $this->_config->Cols->getVisibleColumns();
+        $cols = $this->_config->Cols->getAllColumns();
         foreach ($cols as $index => $col) {
             if ($index > 0) {
                 $query .= ", ";
@@ -98,14 +100,34 @@ class SqlQuery
                 $query .= $table . " ";
             }
         }
-        $this->_query_base = $query;
+        $this->_query_simple_base = $query;
         $query .= " WHERE 1";
         $query .= (is_null($this->_config->getWhere()) ? "" : " AND " . $this->_config->getWhere()) . " /*WHERE*/";
-        $query .= (is_null($this->_config->getLast()) ? "" : " " . $this->_config->getLast()) . " /*LIMIT*/";
+        $query .= (is_null($this->_config->getLast()) ? "" : " " . $this->_config->getLast()) . " /*ORDER*/ /*LIMIT*/";
+        $this->_query_base = $query;
         $this->_sqlQuery = $this->_setWhere($query);
+       // $this->_setOrder();
+    }
+    private function getOrderedQuery()
+    {
+        if($_SERVER["REQUEST_METHOD"] != "POST" || !isset($_POST["order"]) || !is_array($_POST["order"])){
+            return  $this->_sqlQuery;
+        }
+        $nr = $_POST["order"][0]["column"];
+        $dir = $_POST["order"][0]["dir"];
+        $cols = $this->_config->Cols->getVisibleColumns();
+
+        foreach ($cols as $index => $col) {
+            if($index == $nr){
+                return str_replace("/*ORDER*/"," ORDER BY ".$col->alias." ".$dir,$this->_sqlQuery);
+                //echo $this->_sqlQuery;
+                //exit();
+            }
+        }
     }
     private function _setWhere($query)
     {
+
         if(empty($_POST)) {
             return $query."/*EMPTY POST*/";
         }
@@ -116,6 +138,7 @@ class SqlQuery
             $s = Session::get($this->_sessionName);
             $where = $s["where"];
         }
+
         if(!empty($post["ta_extra"])) {
             $where .= " ".$this->_sqlWhereFromOutSearch($post["ta_extra"]);
         }
@@ -123,7 +146,8 @@ class SqlQuery
             $where .= " AND ".$this->_sqlWhereFromSearchText($post["search"]["value"]);
         }
         if(isset($post["first"])){
-           Session::set($this->_sessionName, ["where"=>$where,"post"=>$post]);        }
+           Session::set($this->_sessionName, ["where"=>$where,"post"=>$post]);
+        }
         end:
         return (!empty($where)?str_replace("/*WHERE*/",$where,$query):$query);
     }
@@ -163,7 +187,10 @@ class SqlQuery
         }
         return $sql;
     }
-
+    public function getAllForAjax()
+    {
+        return $this->_allForAjaxCount();
+    }
     public function getDefaultQuery()
     {
         return $this->_defaultQuery();
@@ -183,13 +210,18 @@ class SqlQuery
     }
     private function _limitedQuery()
     {
-        if(!isset($_POST["start"]) || !isset($_POST["length"])){
-            return $this->_sqlQuery;
+
+        if(!isset($_POST["start"]) || !isset($_POST["length"]) || $_POST["length"] < 0) {
+            return $this->getOrderedQuery();
         }
-        return str_replace("/*LIMIT*/"," LIMIT ".$_POST["start"].",".$_POST["length"],$this->_sqlQuery);
+        return str_replace("/*LIMIT*/"," LIMIT ".$_POST["start"].",".$_POST["length"],$this->getOrderedQuery());
     }
     private function _counterQuery()
     {
         return preg_replace("/\/\*START_CLMN\*\/.+\/\*END_CLMN\*\//","COUNT(*) AS ct ",$this->_sqlQuery);
+    }
+    private function _allForAjaxCount()
+    {
+        return preg_replace("/\/\*START_CLMN\*\/.+\/\*END_CLMN\*\//","COUNT(*) AS ct ",$this->_query_base);
     }
 }

@@ -14,7 +14,8 @@ function error($error) {
         1 => "Config file not exists",
         2 => "Key is invalid, ca not save this row",
         3 => "Key is invalid, ca not delete this row",
-        4 => "Append config need array"
+        4 => "Append config need array",
+        5 => "File to load not exists",
     ];
     return $_ERRORS[$error];
 }
