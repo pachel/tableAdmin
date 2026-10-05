@@ -3,6 +3,7 @@
 namespace Pachel\TableAdmin\Models;
 
 use Pachel\dbClass;
+use Pachel\Functions\Session;
 use pachel\TableAdmin;
 
 class ContentGenerator
@@ -124,10 +125,23 @@ class ContentGenerator
         $headers[] = new columnModel(["text"=>"Műveletek","name"=>"tb___buttons"]);
         ob_start();
         include __DIR__."/../tpls/datatable.tpl.php";
-        TableAdmin::$_HTML = ob_get_clean();
+        TableAdmin::$_HTML = (TableAdmin::$_HTML??"").ob_get_clean();
 
         ob_start();
         include __DIR__."/../tpls/datatable.js.tpl.php";
+        TableAdmin::$_JAVASCRIPT = ob_get_clean().(TableAdmin::$_JAVASCRIPT??"");
+    }
+    public function search()
+    {
+        $inputs = $this->_config->Search->getElements();
+        $post = Session::get($this->_config->getSidName());
+
+        ob_start();
+        include __DIR__."/../tpls/search.tpl.php";
+        TableAdmin::$_HTML = ob_get_clean();
+
+        ob_start();
+        include __DIR__."/../tpls/search.js.tpl.php";
         TableAdmin::$_JAVASCRIPT = ob_get_clean();
     }
 

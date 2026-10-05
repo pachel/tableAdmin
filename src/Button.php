@@ -32,7 +32,8 @@ class Buttons
          * Azok gombok, amiknek a "GET" betoltésekor nem kell refresh
          * @var string[] $ACTION_NR
          */
-        $ACTION_NR = ["add", "edit","ajax_api"];
+        $ACTION_NR = ["add", "edit", "ajax_api"];
+
     public function __construct($db, $config)
     {
         $this->_db = $db;
@@ -69,7 +70,7 @@ class Buttons
         $html .= ">" . $btn->text . "</a>";
         $template = $btn->getTemplate();
         //if(preg_match("/{link}/",$template,$preg)){
-            return str_replace(["{link}","{button}","{text}","{onclick}"],[$btn->link_gen,$html,$btn->text,$btn->onclick],$template);
+        return str_replace(["{link}", "{button}", "{text}", "{onclick}"], [$btn->link_gen, $html, $btn->text, $btn->onclick], $template);
         /*}
         return preg_replace("/\{button\}/i",$html,$template);*/
     }
@@ -99,7 +100,7 @@ class Buttons
     public function getAddButtonHTML()
     {
         $button = $this->_getAddButton();
-        if(empty($button)){
+        if (empty($button)) {
             return null;
         }
         $button->makeVariables();
@@ -143,7 +144,6 @@ class Buttons
                 $this->_db->update($this->_config->formGetTable(), $for_update, [$this->_config->formGetId() => $row[$this->_config->formGetId()]]);
             }, true, self::$REQUEST_METHOD_POST)->addAction(function ($row) {
                 $content = new ContentGenerator($this->_db);
-                //file_put_contents(__DIR__."/../tmp/log.log",print_r($this->_config->_get,true)."\n",FILE_APPEND);
                 $content->editor($this->_config->_get->id);
             }, self::$REQUEST_METHOD_ALL)->setText("Szerkeszt");
             /**
@@ -158,7 +158,7 @@ class Buttons
             $this->add("add")->addAction(function ($row) {
                 $content = new ContentGenerator($this->_db);
                 $content->editor();
-            }, true,self::$REQUEST_METHOD_GET)->addAction(function ($row){//POST ESET, amikor elmentjük az adatokat
+            }, true, self::$REQUEST_METHOD_GET)->addAction(function ($row) {//POST ESET, amikor elmentjük az adatokat
                 $fields = $this->_config->Fields->getEditableFields();
                 $for_insert = [];
                 foreach ($fields as $field) {
@@ -167,12 +167,12 @@ class Buttons
                     }
                 }
                 $this->_db->insert($this->_config->formGetTable(), $for_insert);
-            },self::$REQUEST_METHOD_POST)->setText("+ Új sor hozzáadása")->setClass("btn p-2 btn-info mb-3 align-self-start")->setTemplate("{button}");
+            }, self::$REQUEST_METHOD_POST)->setText("+ Új sor hozzáadása")->setClass("btn p-2 btn-info mb-3 align-self-start")->setTemplate("{button}");
             /**
              * Az ajaxos táblageneráláshoz kell, ez adja vissza a találatokat
              * AJAX_API
              */
-            $this->add("ajax_api")->setUnvisible()->addAction(function ($row){
+            $this->add("ajax_api")->setUnvisible()->addAction(function ($row) {
                 $draw = isset($_POST['draw']) ? (int)$_POST['draw'] : 1;
                 $start = isset($_POST['start']) ? (int)$_POST['start'] : 0;
                 $length = isset($_POST['length']) ? (int)$_POST['length'] : 10;
@@ -184,18 +184,18 @@ class Buttons
                 $filtered = $this->_db->query($sql_count)->cache("5m")->simple();
                 $data = $this->_db->query($sql_limited)->rows();
                 $all = $this->_db->query($sql_all)->cache("30m")->simple();
-                foreach ($data AS &$row){
+                foreach ($data as &$row) {
                     $r = $row;
                     $row = (array)$row;
                     $row["tb___buttons"] = $this->_config->Buttons->generateButtonsHTML($r);
                 }
-                TableAdmin::$_JSON = json_encode([
+                TableAdmin::$_JSON = [
                     "draw" => $draw,
                     "recordsTotal" => $all,
                     "recordsFiltered" => $filtered,
                     "data" => $data
-                ]);
-            },Buttons::$REQUEST_METHOD_POST);
+                ];
+            }, Buttons::$REQUEST_METHOD_POST);
         }
     }
 
@@ -206,7 +206,7 @@ class Buttons
      */
     public function add($button)
     {
-        if(gettype($button) == "string") {
+        if (gettype($button) == "string") {
             $button = new Button($button);
         }
         if (gettype($button) != "object" && get_class($button) != "Pachel\TableAdmin\Models\Button") {
@@ -246,7 +246,12 @@ class Buttons
     {
 
         //$_POST["nev"] = "Tóth László 2";
+
+        $this->_config->initSearch();
         $this->_config->initSqlQueries();
+        if ($this->_config->hasSearch()) {
+            $this->_config->Search->run();
+        }
         if (!isset($this->_config->_get->ta_method)) {
             return false;
         }
@@ -260,16 +265,15 @@ class Buttons
             return false;
         }
 
-        if(is_numeric($this->_config->_get->id)) {
+        if (is_numeric($this->_config->_get->id)) {
             $sql = $this->_config->SqlQuery->getRowQuery();
             $row = $this->_db->query($sql)->params($this->_config->_get->id)->line();
 
-        }
-        else{
+        } else {
             $row = [];
         }
-     //   echo $button->text."\n";
-     //   echo count($actions)."\n";
+        //   echo $button->text."\n";
+        //   echo count($actions)."\n";
 
         foreach ($actions as $action) {
 //            echo "type:".$action->type."\n";
@@ -289,7 +293,7 @@ class Buttons
             header("location:" . $this->_config->getBaseUrl());
             exit();
         }
-       // exit();
+        // exit();
         return true;
     }
 }
@@ -311,14 +315,17 @@ class Button
     public $class = null;
     public $target = "_self";
     private $Template;
+
     public function getName()
     {
         return $this->name;
     }
+
     public function setTemplate($template)
     {
         $this->Template = $template;
     }
+
     public function getTemplate()
     {
         return $this->Template;
@@ -335,26 +342,41 @@ class Button
     public function makeVariables($row = null)
     {
         $row = (array)$row;
+
         if (empty($this->link)) {
-            $this->link_gen = TableAdmin::$_Config->getBaseUrl() . "?" . url("ta_method=" . $this->name . ( empty($row)?"":"&id=".$row[TableAdmin::$_Config->getId()]) . "&refresh=" . (in_array($this->name, Buttons::$ACTION_NR) ? 0 : 1));
+            $this->link_gen = TableAdmin::$_Config->getBaseUrl() . "?" . url("ta_method=" . $this->name . (empty($row) ? "" : "&id=" . $row[TableAdmin::$_Config->getId()]) . "&refresh=" . (in_array($this->name, Buttons::$ACTION_NR) ? 0 : 1));
             return;
         }
-        $this->link_gen = $this->_linkCsere($this->link,$row);
+        $this->link_gen = $this->_linkCsere($this->link, $row);
     }
+
     private function _linkCsere($link, $row)
     {
         $c = [];
         $row = (array)$row;
-        if(preg_match("/%/",$link)) {
+        if (preg_match("/%/", $link)) {
             foreach ($row as $index => $value) {
-                $c[0][] = "%" . $index."%";
+                $c[0][] = "%" . $index . "%";
                 $c[1][] = $value;
             }
             $link = str_replace($c[0], $c[1], $link);
         }
         $link = TableAdmin::$_Config->replaceVariables($link);
 
-        if(preg_match_all("/\{row\.(.+?)\}/i", $link, $matches)) {
+        if (preg_match_all("/\{row\.(.+?)\}/i", $link, $matches)) {
+            foreach ($matches[1] as $index => $name) {
+                if (!isset($row[$name])) {
+                    continue;
+                }
+                $search[] = $matches[0][$index];
+                $replace[] = $row[$name];
+            }
+            if (!empty($replace)) {
+                $link = str_replace($search, $replace, $link);
+            }
+        }
+        /*
+        if(preg_match_all("/\{(.+?)\}/i", $link, $matches)) {
             foreach ($matches[1] AS $index => $name){
                 if(!isset($row[$name])){
                     continue;
@@ -380,8 +402,8 @@ class Button
                 $link = str_replace($c[0], $c[1], $link);
             }
         }*/
-        if(preg_match("/(.+)#ec:(.+)/",$link,$preg)) {
-            $link = $preg[1].url($preg[2]);
+        if (preg_match("/(.+)#ec:(.+)/", $link, $preg)) {
+            $link = $preg[1] . url($preg[2]);
         }
         return $link;
     }
@@ -483,7 +505,7 @@ class Button
     /**
      * @return Button
      */
-    
+
     public function setInvisible()
     {
         $this->VisibleMethod = function () {

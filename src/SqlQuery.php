@@ -78,7 +78,7 @@ class SqlQuery
     }
     private $_query_base="";
     private $_query_simple_base="";
-    private function setSelect()
+    public function setSelect()
     {
         $query = "SELECT /*START_CLMN*/ ";
         $cols = $this->_config->Cols->getAllColumns();
@@ -106,6 +106,8 @@ class SqlQuery
         $query .= (is_null($this->_config->getLast()) ? "" : " " . $this->_config->getLast()) . " /*ORDER*/ /*LIMIT*/";
         $this->_query_base = $query;
         $this->_sqlQuery = $this->_setWhere($query);
+        //echo $this->_sqlQuery;
+        //exit();
        // $this->_setOrder();
     }
     private function getOrderedQuery()
@@ -131,6 +133,9 @@ class SqlQuery
         if(empty($_POST)) {
             return $query."/*EMPTY POST*/";
         }
+        else{
+            Session::set($this->_config->getSidName(),$_POST["ta_extra"]);
+        }
         $post = $_POST;
         $where = "";
 
@@ -153,7 +158,13 @@ class SqlQuery
     }
     private function _sqlWhereFromSearchText($text)
     {
-        $cols = $this->_config->Cols->getAllColumns();
+        if($this->_config->hasSearch()) {
+
+            $cols = $this->_config->Cols->getAllColumns();
+        }
+        else{
+            $cols = $this->_config->Cols->getAllColumns();
+        }
         $names = [];
         foreach ($cols as $index => $col) {
             if($col->searchable) {
@@ -167,10 +178,17 @@ class SqlQuery
         $sql = "";
         $c=0;
         foreach ($posts as $name => $value) {
-            $column = $this->_config->Cols->getColumn($name);
+            if($this->_config->hasSearch()) {
+                $column = $this->_config->Search->getElement($name);
+            }
+            else {
+                $column = $this->_config->Cols->getColumn($name);
+            }
             if(empty($column) || empty($column->where) || $value=="") {
                 continue;
             }
+            //echo $column->where."\n";
+
             if(preg_match_all("/\{post\.".$name."\}/",$column->where,$matches)) {
                 $search = [];
                 $replace = [];
@@ -180,11 +198,15 @@ class SqlQuery
                 }
                 $sql .= " AND ".str_replace($search,$replace,$column->where);
             }
+            elseif(preg_match("/\{post\}/",$column->where,$matches)) {
+                $sql .= " AND ".str_replace("{post}",$value,$column->where);
+            }
             else{
                 $sql .= " AND ".$column->where;
             }
 
         }
+
         return $sql;
     }
     public function getAllForAjax()

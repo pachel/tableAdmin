@@ -40,7 +40,13 @@ class Config
      */
     public $_get;
     private $_variables = [];
+    /**
+     * @var Search $Search
+     */
 
+    public $Search;
+
+    private $_sidName;
     public function __construct($file, $db)
     {
         $this->_db = $db;
@@ -53,7 +59,23 @@ class Config
 
         $this->Fields = new Fields($this->_db, $this);
         $this->_setBaseUrl();
+        $this->_sidName = md5($this->getUrl());
         $this->_get = new get();
+    }
+    public function getSidName()
+    {
+        return $this->_sidName;
+    }
+    
+    public function getSearch()
+    {
+        return $this->_config->search;
+    }
+    public function initSearch()
+    {
+        if(isset($this->_config->search) && !empty($this->_config->search)) {
+            $this->Search = new Search($this->_db, $this);
+        }
     }
 
     public function isAjax()
@@ -166,6 +188,14 @@ class Config
             return true;
 
         return false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasSearch()
+    {
+        return (!is_null($this->Search)?true:false);
     }
 
     public function addConfigFile($file)
@@ -337,8 +367,7 @@ class Config
 /**
  * @property string $baseUrl
  * @property string $url
- * @property string[] $tables
- * @property bool $keyCheck
+ * @property string[]|string $tables
  * @property bool $buttonTemplate
  * @property string $last
  * @property bool $ajax
@@ -347,10 +376,10 @@ class Config
  * @property string $where
  * @property string $id id's name
  * @property bool $addButton
- * @property string $formTable
  * @property string $form
  * @property ConfigDataCol[] $cols
  * @property array $variables
+ * @property array $search
  *
  */
 class ConfigData extends \stdClass

@@ -21,7 +21,8 @@ ini_set("display_errors", 1);
     <title></title>
     <link rel="stylesheet" href="../vendor/twbs/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="../vendor/datatables/datatables/media/css/jquery.dataTables.min.css"/>
-    <link rel="stylesheet" href="../js/datatables.min.css"/>
+    <link rel="stylesheet" href="../css/datatables.min.css"/>
+    <link rel="stylesheet" href="../css/style.min.css"/>
     <script type="text/javascript" src="../vendor/components/jquery/jquery.min.js"></script>
 
     <style>
@@ -57,10 +58,10 @@ ini_set("display_errors", 1);
 
     if($tdadmin->isAjax() && !empty(TableAdmin::$_JSON)){
         ob_end_clean();
-        echo TableAdmin::$_JSON;
+        echo json_encode($tdadmin::$_JSON);
         exit();
     }
-    echo TableAdmin::$_HTML;
+    echo $tdadmin::$_HTML;
     ?>
 
 </div>

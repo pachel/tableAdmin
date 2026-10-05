@@ -18,6 +18,10 @@
             "visible": true
         },
         {
+            "name": "id_szamla_tipusok",
+            "visible": false
+        },
+        {
             "name": "id_szamlak",
             "text": "ID",
             "alias": "id_szamlak",
@@ -45,9 +49,8 @@
             "visible": false
         },
         {
-            "name": "DATE_FORMAT(beerkezes,'%u')",
+            "name": "DATE_FORMAT(beerkezes,'%Y/%u')",
             "alias": "b_het",
-            "text": "ID",
             "visible": false
         },
         {
@@ -118,22 +121,20 @@
             "visible": false
         },
         {
-            "name": "@fizetve:=IF(@fizetve IS NULL,0,@fizetve)",
-            "alias": "fizetve2",
-            "text": "Fizetve",
-            "visible": false
-        },
-        {
             "name": "FORMAT(@fizetve,2)",
             "alias": "fizetve_text",
             "text": "Fizetve"
         },
         {
-            "name": "@egyenleg := FORMAT(sz.osszeg_brutto-@fizetve,2)",
-            "alias": "egyenleg",
-            "text": "Egyenleg"
+            "name": "IF(@egyenleg>0,1,0)",
+            "alias": "tartozas",
+            "visible": false
+        },
+        {
+            "name": "(osszeg_brutto-(SELECT SUM(pm.osszeg) FROM p_penzmozgasok pm WHERE pm.id_szamlak=sz.id))",
+            "alias": "egyenleg_s",
+            "visible": false
         }
-
     ],
     "form": {
         "table":"p_szamlak",
@@ -202,6 +203,8 @@
                     "text": "Státusz",
                     "type": "select",
                     "bt_num": 2,
+                    "default": 1,
+                    "require": true,
                     "data": [
                         {
                             "text": "Törölt",
@@ -209,8 +212,7 @@
                         },
                         {
                             "text": "Befogadott",
-                            "value": 1,
-                            "default": true
+                            "value": 1
                         },
                         {
                             "text": "Fizethető",

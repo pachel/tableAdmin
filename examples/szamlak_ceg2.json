@@ -1,4 +1,219 @@
 {
-  "load": ["szamlak.json","toload.json"],
-  "where": "id_tulaj=2"
+  "load": [
+    "szamlak.json",
+    "toload.json"
+  ],
+  "buttonTemplate": " | {button}  |",
+  "classes": "table table-bordered table-striped table-szamlak",
+  "where": "id_tulaj=2",
+  "search": {
+    "send": "change",
+    "cols": [
+      {
+        "name": "tol",
+        "text": "Fizetési határid -tól",
+        "type": "date",
+        "where": "{self.hatarido}>='{post.tol}'",
+        "bt_num": 2
+      },
+      {
+        "name": "ig",
+        "text": "Fizetési határid -ig",
+        "type": "date",
+        "where": "{self.hatarido}<='{post.ig}'",
+        "bt_num": 2
+      },
+      {
+        "name": "fizetesimod",
+        "text": "Fizetési mód",
+        "type": "select",
+        "sqlData": "SELECT id AS value,nev AS `text` FROM p_fizetes_tipusok WHERE statusz=1 ORDER BY nev",
+        "where": "id_fizetes_tipusok={post}",
+        "bt_num": 2
+      },
+      {
+        "name": "kibe",
+        "text": "Mozgás típusa",
+        "type": "select",
+        "data": [
+          {
+            "value": "B",
+            "text": "Bejövő"
+          },
+          {
+            "value": "K",
+            "text": "Kimenő"
+          }
+        ],
+        "bt_num": 2
+      },
+      {
+        "name": "szamlatipus",
+        "alias": "id_szamla_tipusok",
+        "text": "Bizonylat típusa",
+        "type": "select",
+        "sqlData": "SELECT id value,nev text FROM p_szamla_tipusok WHERE statusz=1 ORDER BY nev",
+        "bt_num": 2
+      },
+      {
+        "name": "hetttttt",
+        "text": "Melyik hét (beérk.d. szerint)",
+        "type": "select",
+        "sqlData": "(SELECT '999999999' value, 'Nem besoroltak' text) UNION (SELECT DISTINCT DATE_FORMAT(beerkezes,'%Y/%u') value,DATE_FORMAT(beerkezes,'%Y/%u') text FROM p_szamlak WHERE DATE_SUB(beerkezes,INTERVAL 2 YEAR)<=NOW() AND beerkezes<=NOW() ORDER BY beerkezes DESC) ORDER BY value DESC",
+        "where": "IF('{post}'=999999999,IF(beerkezes IS NULL OR beerkezes='0000-00-00',1,0),IF({self.b_het}='{post}',1,0))=1",
+        "bt_num": 2
+      },
+      {
+        "name": "deviza",
+        "text": "Deviza",
+        "type": "select",
+        "sqlData": "SELECT id AS value,nev AS text FROM p_devizak",
+        "where": "id_deviza={post}",
+        "bt_num": 2
+      },
+      {
+        "name": "teljesites",
+        "text": "Teljesítés",
+        "type": "select",
+        "where": "IF('{post}'='igen',IF(teljesites IS NOT NULL,1,0),IF(teljesites IS NULL,1,0))=1",
+        "data": [
+          {
+            "value": "nem",
+            "text": "Kitöltött"
+          },
+          {
+            "value": "igen",
+            "text": "Nem kitöltött"
+          }
+        ]
+      },
+      {
+        "name": "egyenleg_s",
+        "text": "Egyenleg",
+        "type": "select",
+        "where": "IF('{post}'=1,IF({self}=0,1,0),IF({self}>0,1,0))=1",
+        "data": [
+          {
+            "value": "1",
+            "text": "Kiegyenlített"
+          },
+          {
+            "value": "2",
+            "text": "Kiegyenlítetlen"
+          }
+        ]
+      },
+      {
+        "name": "statusz",
+        "text": "Státusz",
+        "type": "select",
+        "bt_num": 2,
+
+        "data": [
+          {
+            "text": "Törölt",
+            "value": 0
+          },
+          {
+            "text": "Befogadott",
+            "value": 1
+          },
+          {
+            "text": "Fizethető",
+            "value": 2
+          },
+          {
+            "text": "Kiegyenlített",
+            "value": 3
+          }
+        ]
+      },
+      {
+        "name": "k_tol",
+        "text": "Kelt -tól",
+        "type": "date",
+        "where": "kiallitas>='{post.tol}'",
+        "bt_num": 2
+      },
+      {
+        "name": "k_ig",
+        "text": "Kelt -ig",
+        "type": "date",
+        "where": "kiallitas<='{post.ig}'",
+        "bt_num": 2
+      },
+      {
+        "name": "id_koltseghelyek",
+        "text": "Költséghely",
+        "type": "select",
+        "classes": "select2",
+        "sqlData": "SELECT id value,nev text FROM p_koltseghelyek ORDER BY koltseghely",
+        "bt_num": 4
+      },
+      {
+        "type": "reset",
+        "text": "REset"
+      },
+      {
+        "type": "send",
+        "text": "Keresés"
+      }
+    ]
+  },
+  "datatables": {
+
+    "autoWidth": false,
+    "dom": "Blfrtip",
+    "pageLength": 25,
+    "lengthMenu": [10, 25, 50],
+    "buttons": [
+      {
+        "extend": "pdf",
+        "className": "btn btn-pdf",
+        "text": "<i class=\"fas fa-file-pdf\"></i> PDF letöltése",
+        "autoFilter": true,
+        "sheetName": "PDF export",
+        "orientation": "landscape",
+        "exportOptions": {
+          "columns": [
+            0,
+            1,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ]
+        }
+      },
+      {
+        "extend": "excel",
+        "className": "btn btn-xls",
+        "text": "<i class=\"fas fa-file-excel\"></i> XLS letöltése",
+        "autoFilter": true,
+        "sheetName": "XLS export",
+        "exportOptions": {
+          "columns": [
+            0,
+            1,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ]
+        }
+      }
+    ]
+  }
 }

@@ -110,10 +110,18 @@ class Field extends \stdClass
     public $sqlData = null;
     public $saveable = true;
 
+    /**
+     *
+     * @var string $where Ez csal a kereséshez van
+     */
+    public $where = null;
+
     use propertyFromArray;
 
+    use getParrent;
     public function __construct($data)
     {
+
         $this->_setProperty($data);
         if (!is_null($this->data)) {
             foreach ($this->data as &$value) {
@@ -126,6 +134,36 @@ class Field extends \stdClass
         if (is_null($this->alias)) {
             $this->alias = $this->name;
         }
+        if ($this->getParent() == "Search") {
+            if (is_null($this->where)) {
+                $col = TableAdmin::$_Config->Cols->getColumn($this->alias);
+                if(!empty($col)) {
+                    $this->where = $col->name . "='{post}'";
+                }
+            } else {
+                $this->_makeWhere();
+            }
+        }
+    }
+
+    private function _makeWhere()
+    {
+        if (preg_match("/\{self\.(.+?)\}/", $this->where, $preg)) {
+            $col = TableAdmin::$_Config->Cols->getColumn($preg[1]);
+            if (!empty($col)) {
+                $this->where = str_replace($preg[0], $col->name, $this->where);
+            }
+            //$this->where = str_replace($preg[0], $this->name, $this->where);
+        }
+        if (preg_match("/\{self}/", $this->where)) {
+            $col = TableAdmin::$_Config->Cols->getColumn($this->alias);
+            if (!empty($col)) {
+                $this->where = str_replace("{self}", $col->name, $this->where);
+            }
+        }
+        else{
+
+        }
     }
 
     /**
@@ -136,7 +174,7 @@ class Field extends \stdClass
     public function set($row, $db)
     {
         $this->_setValue($row);
-        if(!empty($this->default)){
+        if (!empty($this->default)) {
             $this->default = TableAdmin::$_Config->replaceVariables($this->default);
         }
         if (!empty($this->sqlData)) {
@@ -152,21 +190,21 @@ class Field extends \stdClass
             foreach ($this->data as &$value) {
                 $v = (array)$value;
                 $value = new \stdClass();
-                $value->text = $v["text"];
                 $value->value = $v["value"];
-                $value->default = ((isset($row[$this->alias]) && $value->value == $row[$this->alias]) || (empty($row) && $v["value"]==$this->default) ? true : false);
+                $value->text = $v["text"]??$v["value"];
+                $value->default = ((isset($row[$this->alias]) && $value->value == $row[$this->alias]) || (empty($row) && $v["value"] == $this->default) ? true : false);
                 if ($value->default) {
                     $hasdefault = true;
                 }
             }
-            if(!$hasdefault) {
+            //if (!$hasdefault) {
                 $val = new \stdClass();
                 $val->text = "Válasszon";
-                $val->value = $this->default??"";
-                $val->default = true;
-                $val->disabled = true;
-                array_unshift($this->data,$val);
-            }
+                $val->value = $this->default ?? "";
+                $val->default = (!$hasdefault?true:false);
+                $val->disabled = (isset($this->default) || $this->require?true:false);
+                array_unshift($this->data, $val);
+            //}
 
 
         }
