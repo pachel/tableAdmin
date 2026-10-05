@@ -249,14 +249,6 @@ class TableAdmin
             $content = new ContentGenerator($this->db);
             $content->table();
         }
-
-
-
-        return;
-        exit();
-        //$this->runActions();
-        //$this->replaceAllVariables();
-
     }
     public function getUrl()
     {

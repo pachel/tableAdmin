@@ -74,7 +74,10 @@ class Buttons
         /*}
         return preg_replace("/\{button\}/i",$html,$template);*/
     }
-
+    public function getVisibleButtons($row = null)
+    {
+        return $this->_getVisibleButtons($row);
+    }
 
     /**
      * @return Button[]
@@ -85,9 +88,9 @@ class Buttons
         foreach ($this->_buttons as $button) {
             $button->makeVariables($row);
             /**
-             * Ha az "add" gomb jönne, azt skippeljül, mert azt külön hívjuk meg a táblázat elején
+             * Ha az "add|ajax_api" gomb jönne, azt skippeljül, mert azt külön hívjuk meg a táblázat elején
              */
-            if ($button->getName() == "add") {
+            if (in_array($button->getName(),["add","ajax_api"])) {
                 continue;
             }
             if ($button->isVisible($row)) {
@@ -145,7 +148,7 @@ class Buttons
             }, true, self::$REQUEST_METHOD_POST)->addAction(function ($row) {
                 $content = new ContentGenerator($this->_db);
                 $content->editor($this->_config->_get->id);
-            }, self::$REQUEST_METHOD_ALL)->setText("Szerkeszt");
+            },true, self::$REQUEST_METHOD_ALL)->setText("Szerkeszt");
             /**
              * DELETE alapértelmezett funkció
              */
@@ -167,36 +170,36 @@ class Buttons
                     }
                 }
                 $this->_db->insert($this->_config->formGetTable(), $for_insert);
-            }, self::$REQUEST_METHOD_POST)->setText("+ Új sor hozzáadása")->setClass("btn p-2 btn-info mb-3 align-self-start")->setTemplate("{button}");
-            /**
-             * Az ajaxos táblageneráláshoz kell, ez adja vissza a találatokat
-             * AJAX_API
-             */
-            $this->add("ajax_api")->setUnvisible()->addAction(function ($row) {
-                $draw = isset($_POST['draw']) ? (int)$_POST['draw'] : 1;
-                $start = isset($_POST['start']) ? (int)$_POST['start'] : 0;
-                $length = isset($_POST['length']) ? (int)$_POST['length'] : 10;
-
-                $sql_count = $this->_config->SqlQuery->getCounterQuery();
-                $sql_all = $this->_config->SqlQuery->getAllForAjax();
-                $sql_limited = $this->_config->SqlQuery->getLimitedQuery();
-
-                $filtered = $this->_db->query($sql_count)->cache("5m")->simple();
-                $data = $this->_db->query($sql_limited)->rows();
-                $all = $this->_db->query($sql_all)->cache("30m")->simple();
-                foreach ($data as &$row) {
-                    $r = $row;
-                    $row = (array)$row;
-                    $row["tb___buttons"] = $this->_config->Buttons->generateButtonsHTML($r);
-                }
-                TableAdmin::$_JSON = [
-                    "draw" => $draw,
-                    "recordsTotal" => $all,
-                    "recordsFiltered" => $filtered,
-                    "data" => $data
-                ];
-            }, Buttons::$REQUEST_METHOD_POST);
+            }, self::$REQUEST_METHOD_POST,true)->setText("+ Új sor hozzáadása")->setClass("btn p-2 btn-info mb-3 align-self-start")->setTemplate("{button}");
         }
+        /**
+         * Az ajaxos táblageneráláshoz kell, ez adja vissza a találatokat
+         * AJAX_API
+         */
+        $this->add("ajax_api")->setUnvisible()->addAction(function ($row) {
+            $draw = isset($_POST['draw']) ? (int)$_POST['draw'] : 1;
+            $start = isset($_POST['start']) ? (int)$_POST['start'] : 0;
+            $length = isset($_POST['length']) ? (int)$_POST['length'] : 10;
+
+            $sql_count = $this->_config->SqlQuery->getCounterQuery();
+            $sql_all = $this->_config->SqlQuery->getAllForAjax();
+            $sql_limited = $this->_config->SqlQuery->getLimitedQuery();
+
+            $filtered = $this->_db->query($sql_count)->cache("5m")->simple();
+            $data = $this->_db->query($sql_limited)->rows();
+            $all = $this->_db->query($sql_all)->cache("30m")->simple();
+            foreach ($data as &$row) {
+                $r = $row;
+                $row = (array)$row;
+                $row["tb___buttons"] = $this->_config->Buttons->generateButtonsHTML($r);
+            }
+            TableAdmin::$_JSON = [
+                "draw" => $draw,
+                "recordsTotal" => $all,
+                "recordsFiltered" => $filtered,
+                "data" => $data
+            ];
+        }, Buttons::$REQUEST_METHOD_POST,true);
     }
 
     /**
@@ -248,6 +251,7 @@ class Buttons
         //$_POST["nev"] = "Tóth László 2";
 
         $this->_config->initSearch();
+
         $this->_config->initSqlQueries();
         if ($this->_config->hasSearch()) {
             $this->_config->Search->run();
@@ -257,9 +261,11 @@ class Buttons
         }
 
         $button = $this->get($this->_config->_get->ta_method);
+
         if (empty($button)) {
             return false;
         }
+
         $actions = $button->getActions();
         if (empty($actions)) {
             return false;
@@ -295,6 +301,22 @@ class Buttons
         }
         // exit();
         return true;
+    }
+    public function hasCustomButtons()
+    {
+        foreach ($this->_buttons as $button) {
+            $a = $button->getActions();
+            foreach ($a as $action) {
+                if(!$action->default){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    public function hasButtons()
+    {
+        return ($this->_config->isEditable() || $this->hasCustomButtons()?true:false);
     }
 }
 

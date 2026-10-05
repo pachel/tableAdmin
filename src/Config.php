@@ -59,12 +59,12 @@ class Config
 
         $this->Fields = new Fields($this->_db, $this);
         $this->_setBaseUrl();
-        $this->_sidName = md5($this->getUrl());
+        //$this->_sidName = ;
         $this->_get = new get();
     }
     public function getSidName()
     {
-        return $this->_sidName;
+        return md5($this->getUrl());
     }
     
     public function getSearch()
@@ -87,6 +87,7 @@ class Config
     {
         $this->SqlQuery = new SqlQuery($this);
     }
+
 
     private function _setBaseUrl()
     {
@@ -132,7 +133,10 @@ class Config
 
     public function getBaseUrl()
     {
-        return $this->_config->baseUrl;
+        $base = $this->_getBaseUrl();
+        $path = '/' . ltrim($this->getUrl(), '/');
+        return $base . $path;
+        //return $this->_config->baseUrl;
     }
 
     private static $instances;
@@ -179,7 +183,7 @@ class Config
 
     public function getUrl()
     {
-        return $this->_config->url;
+        return $this->_config->url??"";
     }
 
     public function isEditable()
@@ -385,9 +389,7 @@ class Config
 class ConfigData extends \stdClass
 {
     private $_defaults = [
-        "addButton" => true,
         "id" => "id",
-        "keyCheck" => false,
         "last" => null,
         "form" => null,
         "ajax" => false,

@@ -124,8 +124,13 @@ class Field extends \stdClass
 
         $this->_setProperty($data);
         if (!is_null($this->data)) {
-            foreach ($this->data as &$value) {
-                $value = new selectData($value);
+            if(is_array($this->data)) {
+                foreach ($this->data as &$value) {
+                    $value = new selectData($value);
+                }
+            }
+            elseif (is_object($this->data)) {
+                $this->data = new selectData($this->data);
             }
         }
         if (is_null($this->text)) {
@@ -178,7 +183,13 @@ class Field extends \stdClass
             $this->default = TableAdmin::$_Config->replaceVariables($this->default);
         }
         if (!empty($this->sqlData)) {
-            $this->data = $db->query($this->sqlData)->rows();
+            if($this->type == "checkbox") {
+                $this->data = $db->query($this->sqlData)->line();
+
+            }
+            else {
+                $this->data = $db->query($this->sqlData)->rows();
+            }
         }
         /**
          * Beállítjuk a select-ekhez az alapértelmezett értékekeket
@@ -205,8 +216,10 @@ class Field extends \stdClass
                 $val->disabled = (isset($this->default) || $this->require?true:false);
                 array_unshift($this->data, $val);
             //}
+        }
 
-
+        if ($this->type == "checkbox" && is_object($this->data)) {
+            $this->data->default = (isset($row[$this->alias])?true:false);
         }
     }
 

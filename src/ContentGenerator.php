@@ -112,9 +112,21 @@ class ContentGenerator
         }
         return null;
     }
+    private function lines()
+    {
+        $b = debug_backtrace();
+        $ret = [];
+        foreach ($b AS $index => $line){
+            if($index>0){
+                $ret[] = $line["file"].":".$line["line"];
+            }
+        }
+        return $ret;
+    }
 
     public function table()
     {
+        file_put_contents(__DIR__."/../tmp/table.log",print_r($this->lines(),true)."\n",FILE_APPEND);
         $headers = $this->_getVisibleColumns();
         if(!$this->_config->isAjax()) {
             $rows = $this->_getDataForTables();
@@ -122,7 +134,9 @@ class ContentGenerator
         else{
             $rows = null;
         }
-        $headers[] = new columnModel(["text"=>"Műveletek","name"=>"tb___buttons"]);
+        if($this->_config->Buttons->hasButtons()) {
+            $headers[] = new columnModel(["text" => "Műveletek", "name" => "tb___buttons"]);
+        }
         ob_start();
         include __DIR__."/../tpls/datatable.tpl.php";
         TableAdmin::$_HTML = (TableAdmin::$_HTML??"").ob_get_clean();

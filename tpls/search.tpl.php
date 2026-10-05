@@ -20,7 +20,7 @@ if (!empty($inputs)):
                 ?>
                 <div class="col<?= (empty($field->bt_num) ? "" : "-" . $field->bt_num) ?>">
                     <div class="form-group mb-3">
-                        <label><?= ($field->type!="send" && $field->type!="reset"?$field->text:"&nbsp;") ?></label>
+                        <label><?= (!in_array($field->type,["reset","send","checkbox"])?$field->text:"&nbsp;") ?></label>
                         <?php if ($field->type == "textarea"): ?>
                             <textarea <?= $this->_commonForInput($post, $field) ?>><?= $field->value ?></textarea>
                         <?php elseif ($field->type == "select" || $field->type == "select2"): ?>
@@ -33,6 +33,10 @@ if (!empty($inputs)):
                             </select>
                         <?php elseif($field->type == "send"): ?>
                         <button type="button" class="<?=$field->classes??"btn btn-primary form-control"?>" id="sendSearch"><?=$field->text?></button>
+                        <?php elseif($field->type == "checkbox"): ?>
+                            <label class="ckbox">
+                                <input type="checkbox" name="<?=$field->alias?>" value="<?=$field->data->value?>"<?=(isset($field->data->default) && $field->data->default?" checked":"")?>><span><?=$field->text?></span>
+                            </label>
                         <?php elseif($field->type == "reset"): ?>
                         <button type="reset" class="<?=$field->classes??"btn btn-secondary form-control"?>" id="clearBtn"><?=$field->text?></button>
                         <?php else: ?>

@@ -106,8 +106,6 @@ class SqlQuery
         $query .= (is_null($this->_config->getLast()) ? "" : " " . $this->_config->getLast()) . " /*ORDER*/ /*LIMIT*/";
         $this->_query_base = $query;
         $this->_sqlQuery = $this->_setWhere($query);
-        //echo $this->_sqlQuery;
-        //exit();
        // $this->_setOrder();
     }
     private function getOrderedQuery()
@@ -134,7 +132,7 @@ class SqlQuery
             return $query."/*EMPTY POST*/";
         }
         else{
-            Session::set($this->_config->getSidName(),$_POST["ta_extra"]);
+            Session::set($this->_config->getSidName(),$_POST["ta_extra"]??"");
         }
         $post = $_POST;
         $where = "";
