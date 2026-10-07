@@ -122,7 +122,7 @@ else:
                     $c++;
 
                 }
-                    if ($this->_config->isEditable()) {
+                    if ($this->_config->Buttons->hasButtons()) {
                         echo ",{data: 'tb___buttons'}";
                     }
                     ?>],

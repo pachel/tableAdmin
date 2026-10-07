@@ -47,6 +47,15 @@ class Config
     public $Search;
 
     private $_sidName;
+    private $_hasUploader = false;
+    public function setUploader($uploader)
+    {
+        $this->_hasUploader = (bool)$uploader;
+    }
+    public function hasUploader()
+    {
+        return $this->_hasUploader;
+    }
     public function __construct($file, $db)
     {
         $this->_db = $db;
@@ -330,9 +339,12 @@ class Config
         return $string;
     }
 
-    public function getVariable($name)
+    public function getVariable($name = null)
     {
-        return $this->_config->variables[$name] ?? null;
+        if(is_null($name)){
+            return $this->_config->variables;
+        }
+        return $this->_config->variables->{$name} ?? null;
     }
 
     public function getDatatables()
@@ -434,7 +446,7 @@ class ConfigData extends \stdClass
             $this->{$name} = $value;
         }
         if(!isset($this->variables)){
-            $this->variables = new dbClass();
+            $this->variables = new \stdClass();
         }
         $this->setDefaults();
         /*
@@ -476,6 +488,10 @@ class get extends \stdClass
     public $id;
     public $ta_method;
     public $refresh = 1;
+    /**
+     * @var string $action Ez csak a fileuploader-nél kell
+     */
+    public $action;
 
     public function __construct()
     {

@@ -65,11 +65,16 @@ class SqlQuery
     {
         $fields = $this->_config->Fields->getFields();
         $sql = "SELECT ";
+        $c = 0;
         foreach ($fields as $index => $field){
-            if($index>0){
+            if($field->type == "fileUploader"){//Ezt nem kell lekérdezni, mert ez nem igazi oszlop
+                continue;
+            }
+            if($c>0){
                 $sql .= ", ";
             }
             $sql .= $field->name." AS `".$field->alias."`";
+            $c++;
         }
         $sql .= " FROM `".$this->_config->formGetTable()."`";
         $sql .= " WHERE `" . $this->_config->getId() . "`=?";
@@ -132,6 +137,7 @@ class SqlQuery
             return $query."/*EMPTY POST*/";
         }
         else{
+            //TODO: le kell kezelni a fileuploader postjait is
             Session::set($this->_config->getSidName(),$_POST["ta_extra"]??"");
         }
         $post = $_POST;

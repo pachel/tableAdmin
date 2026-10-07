@@ -23,7 +23,7 @@ $link  = $this->_getLinkForNewForm();
             $cct = $field->__row_number;
             echo "<div class=\"row\">";
         }
-        $ct+=(is_null($field->bt_num)?1:$field->bt_num);
+        $ct+=($field->bt_num??1);
     ?>
     <div class="col<?=(empty($field->bt_num)?"":"-".$field->bt_num)?>">
         <div class="form-group mb-3">
@@ -38,7 +38,10 @@ $link  = $this->_getLinkForNewForm();
                 }
                 ?>
             </select>
-
+            <?php elseif($field->type == "fileUploader"): ?>
+                <button class="form-control btn <?=($field->classes??"")?>" name="<?=$field->alias?>" id="fajlok-btn" type="button"><?=$field->value?></button>
+            <?php  elseif($field->type == "button"): ?>
+            <button class="form-control <?=($field->classes??"")?>" name="<?=$field->alias?>"<?=(!empty($field->id)?" id=\"".$field->id."\"":"")?>><?=$field->value?></button>
             <?php else:?>
             <input type="<?=$field->type?>" <?=$this->_commonForInput($row,$field)?> value="<?=$field->value?>">
             <?php endif; ?>

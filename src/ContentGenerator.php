@@ -59,6 +59,7 @@ class ContentGenerator
         else{
             $row = [];
         }
+
         $this->_config->Fields->setFieldsData($row);
         $fields = $this->_config->Fields->getFields();
         ob_start();
@@ -68,6 +69,11 @@ class ContentGenerator
         ob_start();
         include __DIR__."/../tpls/editForm.js.tpl.php";
         TableAdmin::$_JAVASCRIPT = ob_get_clean();
+
+        if($this->_config->hasUploader()){
+            $files = new Fajlok($this->_db);
+            TableAdmin::$_JAVASCRIPT.=$files->getJavascript();
+        }
     }
 
     /**
@@ -135,7 +141,7 @@ class ContentGenerator
             $rows = null;
         }
         if($this->_config->Buttons->hasButtons()) {
-            $headers[] = new columnModel(["text" => "Műveletek", "name" => "tb___buttons"]);
+            $headers[] = new columnModel(["text" => "Műveletek", "name" => "tb___buttons","alias" => "tb___buttons"]);
         }
         ob_start();
         include __DIR__."/../tpls/datatable.tpl.php";

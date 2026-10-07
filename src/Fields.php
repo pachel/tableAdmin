@@ -59,7 +59,7 @@ class Fields
         }
         $ret = [];
         foreach ($this->_fields as $field) {
-            if (!$field->readonly) {
+            if (!$field->readonly || !$field->nosave) {
                 $ret[] = $field;
             }
         }
@@ -92,6 +92,8 @@ class Field extends \stdClass
     public $classes = null;
     public $alias = null;
     public $readonly = false;
+    public $id = null;
+    public $nosave = false;
     /**
      * Alapértelmezett érték, ha nincs kiválasztva semmi a selectben, akkor ez az érték lesz a value
      * @var string
@@ -121,7 +123,6 @@ class Field extends \stdClass
     use getParrent;
     public function __construct($data)
     {
-
         $this->_setProperty($data);
         if (!is_null($this->data)) {
             if(is_array($this->data)) {
@@ -131,6 +132,12 @@ class Field extends \stdClass
             }
             elseif (is_object($this->data)) {
                 $this->data = new selectData($this->data);
+            }
+        }
+        if ($this->type == "fileUploader"){
+            TableAdmin::$_Config->setUploader(true);
+            if (is_null($this->name)) {
+                $this->name = "fileUploader";
             }
         }
         if (is_null($this->text)) {
@@ -227,7 +234,9 @@ class Field extends \stdClass
     {
         $row = (array)$row;
         if (isset($row[$this->alias])) {
-            $this->value = $row[$this->alias];
+            if(empty($this->value)) {//HA nincs a konfigban beállítva "value", akkor betöltjük ide amit kell
+                $this->value = $row[$this->alias];
+            }
         }
     }
 }

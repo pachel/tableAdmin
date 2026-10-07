@@ -73,6 +73,7 @@ class columns
      */
     public function getAllColumns()
     {
+        
         return $this->columns;
     }
     public function getColumnNames($onlyVisible = true)

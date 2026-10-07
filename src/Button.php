@@ -32,7 +32,8 @@ class Buttons
          * Azok gombok, amiknek a "GET" betoltésekor nem kell refresh
          * @var string[] $ACTION_NR
          */
-        $ACTION_NR = ["add", "edit", "ajax_api"];
+        $ACTION_NR = ["add", "edit", "ajax_api", "file_uploader"],
+        $BUTTONS_DEFAULT = ["add", "delete", "edit", "ajax_api", "file_uploader"];
 
     public function __construct($db, $config)
     {
@@ -74,6 +75,7 @@ class Buttons
         /*}
         return preg_replace("/\{button\}/i",$html,$template);*/
     }
+
     public function getVisibleButtons($row = null)
     {
         return $this->_getVisibleButtons($row);
@@ -90,7 +92,7 @@ class Buttons
             /**
              * Ha az "add|ajax_api" gomb jönne, azt skippeljül, mert azt külön hívjuk meg a táblázat elején
              */
-            if (in_array($button->getName(),["add","ajax_api"])) {
+            if (in_array($button->getName(), ["add", "ajax_api"])) {
                 continue;
             }
             if ($button->isVisible($row)) {
@@ -148,7 +150,7 @@ class Buttons
             }, true, self::$REQUEST_METHOD_POST)->addAction(function ($row) {
                 $content = new ContentGenerator($this->_db);
                 $content->editor($this->_config->_get->id);
-            },true, self::$REQUEST_METHOD_ALL)->setText("Szerkeszt");
+            }, true, self::$REQUEST_METHOD_ALL)->setText("Szerkeszt");
             /**
              * DELETE alapértelmezett funkció
              */
@@ -170,7 +172,7 @@ class Buttons
                     }
                 }
                 $this->_db->insert($this->_config->formGetTable(), $for_insert);
-            }, self::$REQUEST_METHOD_POST,true)->setText("+ Új sor hozzáadása")->setClass("btn p-2 btn-info mb-3 align-self-start")->setTemplate("{button}");
+            }, self::$REQUEST_METHOD_POST, true)->setText("+ Új sor hozzáadása")->setClass("btn p-2 btn-info mb-3 align-self-start")->setTemplate("{button}");
         }
         /**
          * Az ajaxos táblageneráláshoz kell, ez adja vissza a találatokat
@@ -199,7 +201,23 @@ class Buttons
                 "recordsFiltered" => $filtered,
                 "data" => $data
             ];
-        }, Buttons::$REQUEST_METHOD_POST,true);
+        }, Buttons::$REQUEST_METHOD_POST, true);
+        $this->add("file_uploader")->setInvisible()->addAction(function ($row) {
+            $id = $this->_config->_get->id ?? 0;
+            $fajlok = new Fajlok($this->_db);
+            TableAdmin::$_JSON = ["status" => "ok", "files" => $fajlok->list()];
+
+        }, Buttons::$REQUEST_METHOD_GET)->setText("Fájlok feltöltése")->addAction(function ($row) {
+            $id = $this->_config->_get->id ?? 0;
+            $fajlok = new Fajlok($this->_db);
+            if ($this->_config->_get->action == "delete") {
+                $fajlok->deleteById((int)$_POST["id"]);
+                TableAdmin::$_JSON = ["status" => "ok"];
+            } else {
+                $fajlok->upload();
+                TableAdmin::$_JSON = ["status" => "ok"];
+            }
+        }, Buttons::$REQUEST_METHOD_POST);
     }
 
     /**
@@ -302,21 +320,20 @@ class Buttons
         // exit();
         return true;
     }
+
     public function hasCustomButtons()
     {
         foreach ($this->_buttons as $button) {
-            $a = $button->getActions();
-            foreach ($a as $action) {
-                if(!$action->default){
-                    return true;
-                }
+            if (!in_array($button->getName(), self::$BUTTONS_DEFAULT)) {
+                return true;
             }
         }
         return false;
     }
+
     public function hasButtons()
     {
-        return ($this->_config->isEditable() || $this->hasCustomButtons()?true:false);
+        return ($this->_config->isEditable() || $this->hasCustomButtons() ? true : false);
     }
 }
 
@@ -336,6 +353,7 @@ class Button
     public $onclick = null;
     public $class = null;
     public $target = "_self";
+    private $_default = false;
     private $Template;
 
     public function getName()

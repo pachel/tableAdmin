@@ -256,7 +256,7 @@ class TableAdmin
     }
     public function isAjaxRequest()
     {
-        if(isset(self::$_Config->_get->ta_method) && self::$_Config->_get->ta_method == "ajax_api"){
+        if(isset(self::$_Config->_get->ta_method) && in_array(self::$_Config->_get->ta_method,["ajax_api","file_uploader"])){
             return true;
         }
         return false;
