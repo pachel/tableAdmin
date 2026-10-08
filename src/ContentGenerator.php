@@ -29,7 +29,7 @@ class ContentGenerator
      */
     private function _commonForInput($row,$field)
     {
-        $text = ($field->readonly?"readonly ":"")."class=\"form-control ".(!empty($field->classes)?$field->classes:"")."\" placeholder=\"".(!empty($field->placeholder)?$field->placeholder:"")."\" name=\"".$field->alias."\"".$this->_required($field);
+        $text = ($field->readonly?"readonly ":"")."class=\"form-control ".(!empty($field->classes)?$field->classes:"")."\" placeholder=\"".(!empty($field->placeholder)?$field->placeholder:"")."\" name=\"".$field->alias."\"".$this->_required($field).(!empty($field->id)?" id=\"".$field->id."\"":"");
         return $text;
     }
     /**

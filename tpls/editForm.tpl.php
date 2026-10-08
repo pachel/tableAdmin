@@ -16,7 +16,7 @@ $link  = $this->_getLinkForNewForm();
     foreach ($fields as $index => $field):
 
         if($field->type == "hidden"){
-            echo "<input type=\"hidden\" name=\"".$field->alias."\" value=\"".(empty($row)?$field->default:$row[$field->alias])."\" />";
+            echo "<input type=\"hidden\" name=\"".$field->alias."\" value=\"".(empty($row)?$field->value??$field->default:$row[$field->alias])."\" />";
             continue;
         }
         if($ct == 0 || $cct!=$field->__row_number){

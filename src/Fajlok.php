@@ -71,6 +71,7 @@ class Fajlok extends fajlokModel
      */
     public function upload()
     {
+
         $ct = count($_FILES["files"]["name"]);
         for ($i=0;$i<$ct;$i++) {
             $dir = $this->_getDirName();
@@ -111,6 +112,50 @@ class Fajlok extends fajlokModel
             $i++;
         }
     }
+    public function setTempToNewRow($row_id)
+    {
+        $where = ["fid"=>0,"table"=>$this->_tableName,"id_users"=>$this->_options->uid];
+        $this->db->update("fajlok",["fid"=>$row_id],$where);
+    }
+    public function copyFilesTo($idFromCopy,$tableToCopy,$idToCopy)
+    {
+        $fajlok = $this->db->query("SELECT id FROM `fajlok` WHERE `fid`=:fid AND `table`=:table")->params(["fid"=>$idFromCopy,"table"=>$this->_tableName])->array();
+
+        if(empty($fajlok) || !is_array($fajlok) || !$this->_options->hasDir()){
+            return;
+        }
+
+        foreach ($fajlok AS $fajl_id){
+            $this->_copyFile($fajl_id,$tableToCopy,$idToCopy);
+        }
+    }
+    private function _copyFile($id,$tableToCopy,$idToCopy)
+    {
+        $subdir = $this->_getDirName();
+        /**
+         * @var fajlokDataModel $file
+         */
+        $file = $this->db->query("SELECT *FROM `fajlok` WHERE id=?")->params($id)->line();
+        if(empty($file)){
+            return;
+        }
+        $fileToCopy = trimmer($this->_options->uploader_dir."/".$file->path);
+        $newPath = trimmer($subdir."/".md5(microtime().$id).".".$file->mime);
+        $newFile = trimmer($this->_options->uploader_dir."/".$newPath);
+        if(!file_exists($fileToCopy)){
+            return;
+        }
+        copy($fileToCopy,$newFile);
+        $data = [
+            "path" => $newPath,
+            "name" => $file->name,
+            "mime" => $file->mime,
+            "fid" => $idToCopy,
+            "table" => $tableToCopy,
+            "id_users" => $this->_options->uid
+        ];
+        $this->db->insert("fajlok",$data);
+    }
 }
 class Options
 {
@@ -126,7 +171,11 @@ class Options
         $this->gid = (int)TableAdmin::$_Config->getVariable("gid");
         $this->admin_uid = (int)TableAdmin::$_Config->getVariable("admin_uid");
         $this->admin_gid = (int)TableAdmin::$_Config->getVariable("admin_gid");
-        $this->uploader_url = TableAdmin::$_Config->getVariable("uploader_url");
-        $this->uploader_dir = TableAdmin::$_Config->getVariable("uploader_dir");
+        $this->uploader_url = trimmer(TableAdmin::$_Config->getVariable("uploader_url"));
+        $this->uploader_dir = trimmer(TableAdmin::$_Config->getVariable("uploader_dir"));
+    }
+    public function hasDir()
+    {
+        return file_exists($this->uploader_dir);
     }
 }

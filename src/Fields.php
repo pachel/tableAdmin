@@ -59,7 +59,7 @@ class Fields
         }
         $ret = [];
         foreach ($this->_fields as $field) {
-            if (!$field->readonly || !$field->nosave) {
+            if (!$field->readonly && !$field->nosave) {
                 $ret[] = $field;
             }
         }
@@ -93,7 +93,14 @@ class Field extends \stdClass
     public $alias = null;
     public $readonly = false;
     public $id = null;
+    /**
+     * @var bool $nosave Nem lesz elmentve
+     */
     public $nosave = false;
+    /**
+     * @var bool $noload Ez nem kerül bele az editoros select-be
+     */
+    public $noload = false;
     /**
      * Alapértelmezett érték, ha nincs kiválasztva semmi a selectben, akkor ez az érték lesz a value
      * @var string
@@ -189,6 +196,10 @@ class Field extends \stdClass
         if (!empty($this->default)) {
             $this->default = TableAdmin::$_Config->replaceVariables($this->default);
         }
+        if (!empty($this->value)) {
+            $this->value = TableAdmin::$_Config->replaceVariables($this->value);
+        }
+
         if (!empty($this->sqlData)) {
             if($this->type == "checkbox") {
                 $this->data = $db->query($this->sqlData)->line();

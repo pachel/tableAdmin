@@ -172,6 +172,12 @@ class Buttons
                     }
                 }
                 $this->_db->insert($this->_config->formGetTable(), $for_insert);
+
+                if($this->_config->hasUploader()){
+                    $id = $this->_db->last_insert_id();
+                    $fajlok = new Fajlok($this->_db);
+                    $fajlok->setTempToNewRow($id);
+                }
             }, self::$REQUEST_METHOD_POST, true)->setText("+ Új sor hozzáadása")->setClass("btn p-2 btn-info mb-3 align-self-start")->setTemplate("{button}");
         }
         /**

@@ -1,14 +1,22 @@
 {
     "name": "pachel/tableadmin",
     "description": "Table content editor",
+    "repositories": [{
+        "type": "path",
+        "url": "../dbclass",
+        "canonical": false,
+        "options": {
+            "symlink": true
+        }
+    }],
     "require": {
 
-        "pachel/dbclass": "^1.6",
-        "pachel/functions": "^1.1.7"
+        "pachel/dbclass": "dev-master",
+        "pachel/functions": "dev-master"
     },
     "autoload": {      
         "classmap": ["src/"],
-        "files" : ["inc/errors.php"]
+        "files" : ["inc/errors.php","src/functions.php"]
     },
     "require-dev": {
         "twbs/bootstrap": "^5.3",

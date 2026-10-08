@@ -67,7 +67,7 @@ class SqlQuery
         $sql = "SELECT ";
         $c = 0;
         foreach ($fields as $index => $field){
-            if($field->type == "fileUploader"){//Ezt nem kell lekérdezni, mert ez nem igazi oszlop
+            if($field->type == "fileUploader" || ( isset($field->noload) && $field->noload)){//Ezt nem kell lekérdezni, mert ez nem igazi oszlop
                 continue;
             }
             if($c>0){
